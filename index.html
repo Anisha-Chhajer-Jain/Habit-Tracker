@@ -1,9 +1,10 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Minimal To-Do with Persistence</title>
+    <title>Habit Tracker Calendar</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * {
@@ -14,488 +15,459 @@
         }
 
         :root {
-            --primary-color: #4a6fa5;
-            --secondary-color: #166088;
-            --accent-color: #17b890;
-            --light-color: #f8f9fa;
-            --dark-color: #343a40;
-            --danger-color: #e63946;
-            --warning-color: #ffb703;
-            --low-priority: #6c757d;
-            --medium-priority: #ffb703;
-            --high-priority: #e63946;
-            --completed-color: #8ac926;
-            --sidebar-width: 250px;
-            --details-width: 300px;
-            --header-height: 70px;
+            --primary: #4f46e5;
+            --primary-light: #818cf8;
+            --secondary: #10b981;
+            --danger: #ef4444;
+            --light: #f8fafc;
+            --dark: #1e293b;
+            --gray: #64748b;
+            --gray-light: #e2e8f0;
+            --border-radius: 10px;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
         }
 
         body {
-            background-color: #f5f7fa;
-            color: var(--dark-color);
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-            overflow: hidden;
+            background-color: #f1f5f9;
+            color: var(--dark);
+            line-height: 1.6;
         }
 
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 25px;
+        }
+
+        /* Header */
         .header {
-            background-color: var(--primary-color);
-            color: white;
-            padding: 0 20px;
-            height: var(--header-height);
+            grid-column: 1 / -1;
+            background-color: white;
+            padding: 20px 30px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
             display: flex;
-            align-items: center;
             justify-content: space-between;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            z-index: 100;
+            align-items: center;
+            margin-bottom: 10px;
         }
 
-        .logo {
+        .header h1 {
+            color: var(--primary);
             display: flex;
             align-items: center;
             gap: 10px;
         }
 
-        .logo i {
-            font-size: 1.8rem;
+        .header h1 i {
+            color: var(--secondary);
         }
 
-        .logo h1 {
-            font-size: 1.5rem;
-            font-weight: 600;
+        .reminder-banner {
+            grid-column: 1 / -1;
+            background-color: var(--primary-light);
+            color: white;
+            padding: 15px 20px;
+            border-radius: var(--border-radius);
+            display: none;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            animation: fadeIn 0.5s ease;
         }
 
-        .header-controls {
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Sidebar */
+        .sidebar {
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            padding: 25px;
+            height: fit-content;
+        }
+
+        .sidebar h2 {
+            color: var(--primary);
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--gray-light);
             display: flex;
             align-items: center;
+            gap: 10px;
+        }
+
+        .habits-list {
+            list-style: none;
+            margin-bottom: 30px;
+        }
+
+        .habit-item {
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-left: 5px solid var(--primary);
+        }
+
+        .habit-item:hover {
+            background-color: var(--gray-light);
+        }
+
+        .habit-item.active {
+            background-color: var(--primary-light);
+            color: white;
+            font-weight: bold;
+        }
+
+        .habit-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            margin-right: 10px;
+            display: inline-block;
+        }
+
+        .habit-streak {
+            background-color: var(--light);
+            color: var(--dark);
+            padding: 3px 8px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        .add-habit-form {
+            margin-top: 25px;
+            display: flex;
+            flex-direction: column;
             gap: 15px;
         }
 
-        .progress-container {
-            width: 200px;
-            background-color: rgba(255, 255, 255, 0.2);
-            border-radius: 10px;
-            overflow: hidden;
-            height: 10px;
+        .add-habit-form input {
+            padding: 12px;
+            border: 1px solid var(--gray-light);
+            border-radius: 8px;
+            font-size: 1rem;
         }
 
-        .progress-bar {
-            height: 100%;
-            background-color: var(--accent-color);
-            width: 0%;
-            transition: width 0.5s ease;
-        }
-
-        .progress-text {
-            font-size: 0.9rem;
-            font-weight: 500;
-            min-width: 70px;
-        }
-
-        .container {
+        .add-habit-form button {
+            background-color: var(--secondary);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
             display: flex;
-            flex: 1;
-            overflow: hidden;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
         }
 
-        .sidebar {
-            width: var(--sidebar-width);
-            background-color: white;
-            border-right: 1px solid #e0e0e0;
+        .add-habit-form button:hover {
+            background-color: #0da271;
+        }
+
+        /* Main Content */
+        .main-content {
             display: flex;
             flex-direction: column;
-            transition: all 0.3s ease;
-            overflow-y: auto;
+            gap: 25px;
         }
 
-        .lists-header {
-            padding: 20px;
-            border-bottom: 1px solid #e0e0e0;
+        .calendar-container {
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            padding: 25px;
+        }
+
+        .calendar-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            margin-bottom: 25px;
         }
 
-        .lists-header h2 {
-            font-size: 1.2rem;
-            color: var(--primary-color);
+        .calendar-header h2 {
+            color: var(--primary);
+            font-size: 1.8rem;
         }
 
-        .add-list-btn {
-            background-color: var(--primary-color);
-            color: white;
+        .calendar-nav {
+            display: flex;
+            gap: 10px;
+        }
+
+        .calendar-nav button {
+            background-color: var(--light);
             border: none;
-            width: 30px;
-            height: 30px;
+            width: 40px;
+            height: 40px;
             border-radius: 50%;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: background-color 0.2s;
+            transition: background-color 0.3s ease;
         }
 
-        .add-list-btn:hover {
-            background-color: var(--secondary-color);
+        .calendar-nav button:hover {
+            background-color: var(--gray-light);
         }
 
-        .lists {
-            list-style: none;
-            padding: 10px 0;
-            flex: 1;
-        }
-
-        .list-item {
-            padding: 12px 20px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            cursor: pointer;
-            transition: background-color 0.2s;
-        }
-
-        .list-item:hover {
-            background-color: #f8f9fa;
-        }
-
-        .list-item.active {
-            background-color: #e8f0fe;
-            border-left: 4px solid var(--primary-color);
-        }
-
-        .list-name {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            flex: 1;
-        }
-
-        .list-name i {
-            color: var(--primary-color);
-        }
-
-        .list-actions {
-            display: flex;
-            gap: 8px;
-            opacity: 0;
-            transition: opacity 0.2s;
-        }
-
-        .list-item:hover .list-actions {
-            opacity: 1;
-        }
-
-        .list-actions button {
-            background: none;
-            border: none;
-            cursor: pointer;
-            color: #6c757d;
-            font-size: 0.8rem;
-        }
-
-        .list-actions button:hover {
-            color: var(--primary-color);
-        }
-
-        .main-content {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            padding: 20px;
-        }
-
-        .tasks-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-
-        .tasks-header h2 {
-            color: var(--primary-color);
-            font-size: 1.5rem;
-        }
-
-        .task-controls {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
-
-        .filters {
-            display: flex;
-            gap: 5px;
-            background-color: white;
-            border-radius: 8px;
-            padding: 5px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-        }
-
-        .filter-btn {
-            padding: 8px 15px;
-            border: none;
-            background: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: 500;
-            transition: all 0.2s;
-        }
-
-        .filter-btn.active {
-            background-color: var(--primary-color);
-            color: white;
-        }
-
-        .clear-completed-btn {
-            background-color: #f8f9fa;
-            border: 1px solid #dee2e6;
-            padding: 8px 15px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: 500;
-            transition: all 0.2s;
-        }
-
-        .clear-completed-btn:hover {
-            background-color: #e9ecef;
-        }
-
-        .add-task-form {
-            display: flex;
-            margin-bottom: 20px;
-            gap: 10px;
-        }
-
-        .task-input {
-            flex: 1;
-            padding: 12px 15px;
-            border: 1px solid #dee2e6;
-            border-radius: 8px;
-            font-size: 1rem;
-        }
-
-        .add-task-btn {
-            background-color: var(--accent-color);
-            color: white;
-            border: none;
-            padding: 0 20px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 500;
-            transition: background-color 0.2s;
-        }
-
-        .add-task-btn:hover {
-            background-color: #119672;
-        }
-
-        .tasks-list {
-            flex: 1;
-            overflow-y: auto;
-            background-color: white;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-            padding: 10px;
-        }
-
-        .task-item {
-            display: flex;
-            align-items: center;
-            padding: 15px;
-            border-bottom: 1px solid #f0f0f0;
-            transition: all 0.2s;
-        }
-
-        .task-item:hover {
-            background-color: #f9f9f9;
-        }
-
-        .task-item.completed {
-            opacity: 0.8;
-            background-color: #f8f9fa;
-        }
-
-        .task-item.completed .task-title {
-            text-decoration: line-through;
-            color: #6c757d;
-        }
-
-        .task-checkbox {
-            margin-right: 15px;
-            width: 20px;
-            height: 20px;
-            cursor: pointer;
-        }
-
-        .task-content {
-            flex: 1;
-        }
-
-        .task-title {
-            font-weight: 500;
-            margin-bottom: 5px;
-        }
-
-        .task-meta {
-            display: flex;
-            gap: 15px;
-            font-size: 0.85rem;
-            color: #6c757d;
-        }
-
-        .task-priority {
-            display: inline-block;
-            padding: 2px 8px;
-            border-radius: 10px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            color: white;
-        }
-
-        .priority-low {
-            background-color: var(--low-priority);
-        }
-
-        .priority-medium {
-            background-color: var(--medium-priority);
-        }
-
-        .priority-high {
-            background-color: var(--high-priority);
-        }
-
-        .task-due-date {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        .task-due-date.overdue {
-            color: var(--danger-color);
-            font-weight: 600;
-        }
-
-        .task-actions {
-            display: flex;
-            gap: 10px;
-            opacity: 0;
-            transition: opacity 0.2s;
-        }
-
-        .task-item:hover .task-actions {
-            opacity: 1;
-        }
-
-        .task-actions button {
-            background: none;
-            border: none;
-            cursor: pointer;
-            color: #6c757d;
-            font-size: 0.9rem;
-        }
-
-        .task-actions button:hover {
-            color: var(--primary-color);
-        }
-
-        .details-panel {
-            width: var(--details-width);
-            background-color: white;
-            border-left: 1px solid #e0e0e0;
-            padding: 20px;
-            overflow-y: auto;
-            transition: all 0.3s ease;
-        }
-
-        .details-header {
-            margin-bottom: 20px;
-            color: var(--primary-color);
-        }
-
-        .details-content {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-
-        .task-detail-item {
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-        }
-
-        .detail-label {
-            font-weight: 600;
-            color: #6c757d;
-            font-size: 0.9rem;
-        }
-
-        .detail-value {
-            padding: 10px;
-            background-color: #f8f9fa;
-            border-radius: 5px;
-            min-height: 40px;
-        }
-
-        .detail-value[contenteditable="true"] {
-            outline: none;
-            border: 1px solid #dee2e6;
-        }
-
-        .no-task-selected {
+        .weekdays {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
             text-align: center;
-            color: #6c757d;
-            padding: 40px 20px;
-        }
-
-        .no-task-selected i {
-            font-size: 3rem;
+            font-weight: bold;
+            color: var(--gray);
             margin-bottom: 15px;
-            color: #dee2e6;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--gray-light);
         }
 
-        .session-summary {
-            background-color: #f0f7ff;
-            border-radius: 10px;
-            padding: 15px;
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 10px;
+        }
+
+        .day {
+            aspect-ratio: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            border: 2px solid transparent;
+        }
+
+        .day:hover {
+            background-color: var(--gray-light);
+        }
+
+        .day.empty {
+            background-color: transparent;
+            cursor: default;
+        }
+
+        .day.empty:hover {
+            background-color: transparent;
+        }
+
+        .day.completed {
+            border-color: var(--secondary);
+        }
+
+        .day-number {
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        .day-status {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-top: 5px;
+        }
+
+        .day-note-indicator {
+            position: absolute;
+            bottom: 5px;
+            right: 5px;
+            font-size: 0.7rem;
+            color: var(--primary);
+        }
+
+        /* Streak Panel */
+        .streak-panel {
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            padding: 25px;
+        }
+
+        .streak-panel h2 {
+            color: var(--primary);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .current-streak {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: var(--secondary);
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .badges-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
             margin-top: 20px;
         }
 
-        .session-summary h3 {
-            color: var(--primary-color);
-            margin-bottom: 10px;
-            font-size: 1rem;
+        .badge {
+            background-color: var(--light);
+            padding: 10px 15px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: bold;
+            transition: transform 0.3s ease;
         }
 
-        .session-stats {
+        .badge.unlocked {
+            background-color: var(--primary-light);
+            color: white;
+        }
+
+        .badge.new {
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        /* Controls */
+        .controls {
+            grid-column: 1 / -1;
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 10px;
+        }
+
+        .control-card {
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .control-card h3 {
+            color: var(--primary);
+            display: flex;
+            align-items: center;
             gap: 10px;
         }
 
-        .session-stat {
+        .reminder-control {
             display: flex;
-            flex-direction: column;
+            justify-content: space-between;
             align-items: center;
-            padding: 10px;
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 30px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 22px;
+            width: 22px;
+            left: 4px;
+            bottom: 4px;
             background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .toggle-slider {
+            background-color: var(--secondary);
+        }
+
+        input:checked + .toggle-slider:before {
+            transform: translateX(30px);
+        }
+
+        .export-import-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 10px;
+        }
+
+        .export-import-buttons button {
+            flex: 1;
+            padding: 12px;
+            border: none;
             border-radius: 8px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
         }
 
-        .stat-value {
-            font-weight: 700;
-            font-size: 1.2rem;
-            color: var(--primary-color);
+        .export-btn {
+            background-color: var(--primary);
+            color: white;
         }
 
-        .stat-label {
-            font-size: 0.8rem;
-            color: #6c757d;
+        .export-btn:hover {
+            background-color: #4338ca;
         }
 
+        .import-btn {
+            background-color: var(--gray-light);
+            color: var(--dark);
+        }
+
+        .import-btn:hover {
+            background-color: #d1d5db;
+        }
+
+        /* Modal */
         .modal {
             display: none;
             position: fixed;
@@ -505,1060 +477,796 @@
             height: 100%;
             background-color: rgba(0, 0, 0, 0.5);
             z-index: 1000;
-            align-items: center;
             justify-content: center;
+            align-items: center;
         }
 
         .modal-content {
             background-color: white;
-            border-radius: 10px;
+            padding: 30px;
+            border-radius: var(--border-radius);
             width: 90%;
             max-width: 500px;
-            padding: 30px;
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            animation: modalFadeIn 0.3s ease;
+        }
+
+        @keyframes modalFadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             margin-bottom: 20px;
-            color: var(--primary-color);
         }
 
-        .modal-body {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
+        .modal-header h3 {
+            color: var(--primary);
         }
 
-        .form-group {
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-        }
-
-        .form-group label {
-            font-weight: 500;
-        }
-
-        .form-control {
-            padding: 10px;
-            border: 1px solid #dee2e6;
-            border-radius: 5px;
-            font-size: 1rem;
-        }
-
-        .modal-footer {
-            margin-top: 20px;
-            display: flex;
-            justify-content: flex-end;
-            gap: 10px;
-        }
-
-        .btn {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: 500;
-            transition: all 0.2s;
-        }
-
-        .btn-primary {
-            background-color: var(--primary-color);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background-color: var(--secondary-color);
-        }
-
-        .btn-secondary {
-            background-color: #6c757d;
-            color: white;
-        }
-
-        .btn-secondary:hover {
-            background-color: #5a6268;
-        }
-
-        .toggle-sidebar, .toggle-details {
-            display: none;
+        .modal-close {
             background: none;
             border: none;
             font-size: 1.5rem;
-            color: white;
             cursor: pointer;
+            color: var(--gray);
         }
 
-        .settings-btn {
-            background: none;
+        .modal-body {
+            margin-bottom: 25px;
+        }
+
+        .modal-date {
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: var(--dark);
+        }
+
+        .modal-notes {
+            width: 100%;
+            padding: 15px;
+            border: 1px solid var(--gray-light);
+            border-radius: 8px;
+            font-size: 1rem;
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 15px;
+        }
+
+        .modal-btn {
+            padding: 10px 20px;
+            border-radius: 8px;
             border: none;
-            font-size: 1.2rem;
-            color: white;
             cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
         }
 
-        @media (max-width: 992px) {
-            .sidebar {
-                position: fixed;
-                left: 0;
-                top: var(--header-height);
-                height: calc(100vh - var(--header-height));
-                transform: translateX(-100%);
-                z-index: 500;
-            }
+        .modal-save {
+            background-color: var(--secondary);
+            color: white;
+        }
 
-            .sidebar.open {
-                transform: translateX(0);
-            }
+        .modal-save:hover {
+            background-color: #0da271;
+        }
 
-            .details-panel {
-                position: fixed;
-                right: 0;
-                top: var(--header-height);
-                height: calc(100vh - var(--header-height));
-                transform: translateX(100%);
-                z-index: 500;
-            }
+        .modal-cancel {
+            background-color: var(--gray-light);
+            color: var(--dark);
+        }
 
-            .details-panel.open {
-                transform: translateX(0);
-            }
+        .modal-cancel:hover {
+            background-color: #d1d5db;
+        }
 
-            .toggle-sidebar, .toggle-details {
-                display: block;
-            }
+        /* Tooltip */
+        .tooltip {
+            position: absolute;
+            background-color: var(--dark);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            z-index: 100;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+            white-space: nowrap;
+            top: -40px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
 
-            .header-controls {
-                gap: 10px;
-            }
+        .tooltip::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: var(--dark) transparent transparent transparent;
+        }
 
-            .progress-container {
-                width: 150px;
+        .day:hover .tooltip {
+            opacity: 1;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+            
+            .controls {
+                grid-template-columns: 1fr;
             }
         }
 
-        @media (max-width: 576px) {
-            .header {
-                padding: 0 10px;
+        @media (max-width: 768px) {
+            .calendar-grid {
+                gap: 5px;
             }
-
-            .logo h1 {
-                font-size: 1.2rem;
+            
+            .badges-container {
+                justify-content: center;
             }
-
-            .progress-container {
-                width: 100px;
-            }
-
-            .progress-text {
-                font-size: 0.8rem;
-                min-width: 60px;
-            }
-
-            .tasks-header {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 10px;
-            }
-
-            .task-controls {
-                width: 100%;
-                justify-content: space-between;
-            }
-
-            .add-task-form {
+            
+            .export-import-buttons {
                 flex-direction: column;
             }
         }
     </style>
 </head>
 <body>
-    <header class="header">
-        <div class="logo">
-            <button class="toggle-sidebar">
-                <i class="fas fa-bars"></i>
-            </button>
-            <i class="fas fa-tasks"></i>
-            <h1>Minimal To-Do</h1>
-        </div>
-        
-        <div class="header-controls">
-            <div class="progress-text">0% Complete</div>
-            <div class="progress-container">
-                <div class="progress-bar"></div>
-            </div>
-            <button class="settings-btn" id="settingsBtn">
-                <i class="fas fa-cog"></i>
-            </button>
-            <button class="toggle-details">
-                <i class="fas fa-chevron-left"></i>
-            </button>
-        </div>
-    </header>
-
     <div class="container">
-        <aside class="sidebar">
-            <div class="lists-header">
-                <h2>Lists</h2>
-                <button class="add-list-btn" id="addListBtn">
-                    <i class="fas fa-plus"></i>
-                </button>
+        <!-- Header -->
+        <header class="header">
+            <h1><i class="fas fa-calendar-check"></i> Habit Tracker Calendar</h1>
+            <div class="current-date" id="currentDate"></div>
+        </header>
+
+        <!-- Reminder Banner -->
+        <div class="reminder-banner" id="reminderBanner">
+            <div>
+                <i class="fas fa-bell"></i>
+                <strong>Daily Reminder:</strong> Don't forget to track your habit for today!
             </div>
-            <ul class="lists" id="listsContainer">
-                <!-- Lists will be added here dynamically -->
+            <button id="dismissReminder">Dismiss</button>
+        </div>
+
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <h2><i class="fas fa-list"></i> My Habits</h2>
+            <ul class="habits-list" id="habitsList">
+                <!-- Habit items will be added here -->
             </ul>
             
-            <div class="session-summary">
-                <h3>Session Summary</h3>
-                <div class="session-stats">
-                    <div class="session-stat">
-                        <span class="stat-value" id="sessionCompleted">0</span>
-                        <span class="stat-label">Completed</span>
-                    </div>
-                    <div class="session-stat">
-                        <span class="stat-value" id="sessionTime">0m</span>
-                        <span class="stat-label">Time Spent</span>
-                    </div>
-                </div>
-            </div>
+            <form class="add-habit-form" id="addHabitForm">
+                <input type="text" id="habitName" placeholder="New habit name" required>
+                <input type="color" id="habitColor" value="#4f46e5">
+                <button type="submit"><i class="fas fa-plus"></i> Add Habit</button>
+            </form>
         </aside>
 
+        <!-- Main Content -->
         <main class="main-content">
-            <div class="tasks-header">
-                <h2 id="currentListTitle">Tasks</h2>
-                <div class="task-controls">
-                    <div class="filters">
-                        <button class="filter-btn active" data-filter="all">All</button>
-                        <button class="filter-btn" data-filter="active">Active</button>
-                        <button class="filter-btn" data-filter="completed">Completed</button>
+            <!-- Calendar -->
+            <section class="calendar-container">
+                <div class="calendar-header">
+                    <h2 id="calendarMonth">May 2023</h2>
+                    <div class="calendar-nav">
+                        <button id="prevMonth"><i class="fas fa-chevron-left"></i></button>
+                        <button id="todayMonth">Today</button>
+                        <button id="nextMonth"><i class="fas fa-chevron-right"></i></button>
                     </div>
-                    <button class="clear-completed-btn" id="clearCompletedBtn">Clear Completed</button>
                 </div>
-            </div>
-
-            <form class="add-task-form" id="addTaskForm">
-                <input type="text" class="task-input" id="taskInput" placeholder="Add a new task..." required>
-                <button type="submit" class="add-task-btn">Add Task</button>
-            </form>
-
-            <div class="tasks-list" id="tasksContainer">
-                <!-- Tasks will be added here dynamically -->
-            </div>
+                
+                <div class="weekdays">
+                    <div>Sun</div>
+                    <div>Mon</div>
+                    <div>Tue</div>
+                    <div>Wed</div>
+                    <div>Thu</div>
+                    <div>Fri</div>
+                    <div>Sat</div>
+                </div>
+                
+                <div class="calendar-grid" id="calendarGrid">
+                    <!-- Calendar days will be generated here -->
+                </div>
+            </section>
+            
+            <!-- Streak Panel -->
+            <section class="streak-panel">
+                <h2><i class="fas fa-fire"></i> Streaks & Badges</h2>
+                <div class="current-streak" id="currentStreak">0 days</div>
+                <div class="badges-container" id="badgesContainer">
+                    <!-- Badges will be added here -->
+                </div>
+            </section>
         </main>
 
-        <aside class="details-panel">
-            <div class="details-header">
-                <h2>Task Details</h2>
-            </div>
-            <div class="details-content" id="taskDetails">
-                <div class="no-task-selected">
-                    <i class="fas fa-clipboard-list"></i>
-                    <p>Select a task to view details</p>
-                </div>
-            </div>
-        </aside>
-    </div>
-
-    <!-- Settings Modal -->
-    <div class="modal" id="settingsModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>Settings</h2>
-            </div>
-            <div class="modal-body">
-                <div class="form-group">
-                    <label for="autoArchive">
-                        <input type="checkbox" id="autoArchive"> Auto-archive completed tasks
+        <!-- Controls -->
+        <section class="controls">
+            <div class="control-card">
+                <h3><i class="fas fa-bell"></i> Daily Reminder</h3>
+                <div class="reminder-control">
+                    <span>Enable reminders</span>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="reminderToggle">
+                        <span class="toggle-slider"></span>
                     </label>
-                    <small>Completed tasks will be automatically archived after 5 seconds</small>
                 </div>
-                <div class="form-group">
-                    <label for="archiveDelay">Archive delay (seconds):</label>
-                    <input type="number" id="archiveDelay" class="form-control" value="5" min="1" max="60">
-                </div>
-                <div class="form-group">
-                    <label for="defaultPriority">Default priority:</label>
-                    <select id="defaultPriority" class="form-control">
-                        <option value="low">Low</option>
-                        <option value="medium" selected>Medium</option>
-                        <option value="high">High</option>
-                    </select>
-                </div>
+                <p>Get a daily reminder to track your habit (simulated while page is open).</p>
             </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" id="closeSettingsBtn">Close</button>
-                <button class="btn btn-primary" id="saveSettingsBtn">Save Settings</button>
+            
+            <div class="control-card">
+                <h3><i class="fas fa-file-export"></i> Data Management</h3>
+                <p>Export your habit data to a JSON file or import previously saved data.</p>
+                <div class="export-import-buttons">
+                    <button class="export-btn" id="exportData">
+                        <i class="fas fa-download"></i> Export Data
+                    </button>
+                    <button class="import-btn" id="importData">
+                        <i class="fas fa-upload"></i> Import Data
+                    </button>
+                </div>
+                <input type="file" id="importFile" accept=".json" style="display: none;">
             </div>
-        </div>
+        </section>
     </div>
 
-    <!-- List Modal -->
-    <div class="modal" id="listModal">
+    <!-- Day Modal -->
+    <div class="modal" id="dayModal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2 id="listModalTitle">Add New List</h2>
+                <h3>Daily Entry</h3>
+                <button class="modal-close" id="closeModal">&times;</button>
             </div>
             <div class="modal-body">
-                <div class="form-group">
-                    <label for="listName">List Name</label>
-                    <input type="text" id="listName" class="form-control" placeholder="Enter list name">
-                </div>
+                <div class="modal-date" id="modalDate">May 15, 2023</div>
+                <textarea class="modal-notes" id="modalNotes" placeholder="Add a note for today (e.g., 'Did 20 pushups', 'Drank 8 glasses of water')..."></textarea>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-secondary" id="cancelListBtn">Cancel</button>
-                <button class="btn btn-primary" id="saveListBtn">Save List</button>
+                <button class="modal-btn modal-cancel" id="cancelModal">Cancel</button>
+                <button class="modal-btn modal-save" id="saveModal">Save</button>
             </div>
         </div>
     </div>
 
     <script>
-        // App State
-        const state = {
-            lists: [],
-            tasks: [],
-            currentListId: null,
-            selectedTaskId: null,
-            currentFilter: 'all',
-            settings: {
-                autoArchive: false,
-                archiveDelay: 5,
-                defaultPriority: 'medium'
-            },
-            session: {
-                startTime: Date.now(),
-                completedCount: 0,
-                timeSpent: 0
-            }
-        };
+        // Habit Tracker Application
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize application
+            initApp();
+        });
 
-        // DOM Elements
-        const elements = {
-            listsContainer: document.getElementById('listsContainer'),
-            tasksContainer: document.getElementById('tasksContainer'),
-            taskDetails: document.getElementById('taskDetails'),
-            currentListTitle: document.getElementById('currentListTitle'),
-            addTaskForm: document.getElementById('addTaskForm'),
-            taskInput: document.getElementById('taskInput'),
-            progressBar: document.querySelector('.progress-bar'),
-            progressText: document.querySelector('.progress-text'),
-            filters: document.querySelectorAll('.filter-btn'),
-            clearCompletedBtn: document.getElementById('clearCompletedBtn'),
-            addListBtn: document.getElementById('addListBtn'),
-            settingsBtn: document.getElementById('settingsBtn'),
-            settingsModal: document.getElementById('settingsModal'),
-            closeSettingsBtn: document.getElementById('closeSettingsBtn'),
-            saveSettingsBtn: document.getElementById('saveSettingsBtn'),
-            autoArchive: document.getElementById('autoArchive'),
-            archiveDelay: document.getElementById('archiveDelay'),
-            defaultPriority: document.getElementById('defaultPriority'),
-            listModal: document.getElementById('listModal'),
-            listModalTitle: document.getElementById('listModalTitle'),
-            listName: document.getElementById('listName'),
-            cancelListBtn: document.getElementById('cancelListBtn'),
-            saveListBtn: document.getElementById('saveListBtn'),
-            toggleSidebar: document.querySelector('.toggle-sidebar'),
-            toggleDetails: document.querySelector('.toggle-details'),
-            sidebar: document.querySelector('.sidebar'),
-            detailsPanel: document.querySelector('.details-panel'),
-            sessionCompleted: document.getElementById('sessionCompleted'),
-            sessionTime: document.getElementById('sessionTime')
-        };
+        // Global variables
+        let habits = [];
+        let activeHabitId = null;
+        let currentMonth = new Date().getMonth();
+        let currentYear = new Date().getFullYear();
+        let selectedDay = null;
+        let reminderTimeout = null;
 
-        // Initialize the app
-        function init() {
-            loadStateFromStorage();
+        // Initialize the application
+        function initApp() {
+            // Load data from localStorage
+            loadFromLocalStorage();
+            
+            // Set current date in header
+            updateCurrentDate();
+            
+            // Render the sidebar with habits
+            renderHabitsList();
+            
+            // Generate the calendar
+            generateCalendar(currentMonth, currentYear);
+            
+            // Set up event listeners
             setupEventListeners();
-            renderLists();
-            updateSessionStats();
-            startSessionTimer();
             
-            // Set default list if none selected
-            if (state.lists.length > 0 && !state.currentListId) {
-                state.currentListId = state.lists[0].id;
-                saveStateToStorage();
-            }
+            // Check for reminder
+            checkReminder();
             
-            renderTasks();
-            updateProgress();
-        }
-
-        // Load state from localStorage
-        function loadStateFromStorage() {
-            // Load lists
-            const savedLists = localStorage.getItem('todoLists');
-            if (savedLists) {
-                state.lists = JSON.parse(savedLists);
-            } else {
-                // Create default lists
-                state.lists = [
-                    { id: '1', name: 'Work', icon: 'fas fa-briefcase' },
-                    { id: '2', name: 'Personal', icon: 'fas fa-home' },
-                    { id: '3', name: 'Shopping', icon: 'fas fa-shopping-cart' }
-                ];
-            }
-            
-            // Load tasks
-            const savedTasks = localStorage.getItem('todoTasks');
-            if (savedTasks) {
-                state.tasks = JSON.parse(savedTasks);
-            }
-            
-            // Load current list
-            const savedCurrentList = localStorage.getItem('currentListId');
-            if (savedCurrentList) {
-                state.currentListId = savedCurrentList;
-            }
-            
-            // Load settings
-            const savedSettings = localStorage.getItem('todoSettings');
-            if (savedSettings) {
-                state.settings = JSON.parse(savedSettings);
-                elements.autoArchive.checked = state.settings.autoArchive;
-                elements.archiveDelay.value = state.settings.archiveDelay;
-                elements.defaultPriority.value = state.settings.defaultPriority;
-            }
-            
-            // Load session data
-            const savedSession = sessionStorage.getItem('todoSession');
-            if (savedSession) {
-                const sessionData = JSON.parse(savedSession);
-                state.session.completedCount = sessionData.completedCount || 0;
-                state.session.startTime = sessionData.startTime || Date.now();
-            } else {
-                sessionStorage.setItem('todoSession', JSON.stringify({
-                    startTime: state.session.startTime,
-                    completedCount: 0
-                }));
+            // Initialize default habit if none exists
+            if (habits.length === 0) {
+                createDefaultHabits();
             }
         }
 
-        // Save state to localStorage
-        function saveStateToStorage() {
-            localStorage.setItem('todoLists', JSON.stringify(state.lists));
-            localStorage.setItem('todoTasks', JSON.stringify(state.tasks));
-            localStorage.setItem('currentListId', state.currentListId);
-            localStorage.setItem('todoSettings', JSON.stringify(state.settings));
+        // Load data from localStorage
+        function loadFromLocalStorage() {
+            const savedHabits = localStorage.getItem('habitTrackerData');
+            const savedActiveHabit = localStorage.getItem('activeHabitId');
+            const savedReminder = localStorage.getItem('reminderEnabled');
             
-            // Update session storage
-            sessionStorage.setItem('todoSession', JSON.stringify({
-                startTime: state.session.startTime,
-                completedCount: state.session.completedCount
-            }));
+            if (savedHabits) {
+                habits = JSON.parse(savedHabits);
+            }
+            
+            if (savedActiveHabit) {
+                activeHabitId = savedActiveHabit;
+            }
+            
+            if (savedReminder) {
+                document.getElementById('reminderToggle').checked = savedReminder === 'true';
+            }
         }
 
-        // Setup event listeners
-        function setupEventListeners() {
-            // Task form submission
-            elements.addTaskForm.addEventListener('submit', addTask);
-            
-            // Filter buttons
-            elements.filters.forEach(filter => {
-                filter.addEventListener('click', () => {
-                    elements.filters.forEach(f => f.classList.remove('active'));
-                    filter.classList.add('active');
-                    state.currentFilter = filter.dataset.filter;
-                    renderTasks();
-                });
-            });
-            
-            // Clear completed tasks
-            elements.clearCompletedBtn.addEventListener('click', clearCompletedTasks);
-            
-            // List management
-            elements.addListBtn.addEventListener('click', () => openListModal('add'));
-            
-            // Settings
-            elements.settingsBtn.addEventListener('click', () => elements.settingsModal.style.display = 'flex');
-            elements.closeSettingsBtn.addEventListener('click', () => elements.settingsModal.style.display = 'none');
-            elements.saveSettingsBtn.addEventListener('click', saveSettings);
-            
-            // List modal
-            elements.cancelListBtn.addEventListener('click', () => elements.listModal.style.display = 'none');
-            elements.saveListBtn.addEventListener('click', saveList);
-            
-            // Mobile navigation
-            elements.toggleSidebar.addEventListener('click', () => elements.sidebar.classList.toggle('open'));
-            elements.toggleDetails.addEventListener('click', () => {
-                elements.detailsPanel.classList.toggle('open');
-                const icon = elements.toggleDetails.querySelector('i');
-                if (elements.detailsPanel.classList.contains('open')) {
-                    icon.className = 'fas fa-chevron-right';
-                } else {
-                    icon.className = 'fas fa-chevron-left';
+        // Save data to localStorage
+        function saveToLocalStorage() {
+            localStorage.setItem('habitTrackerData', JSON.stringify(habits));
+            if (activeHabitId) {
+                localStorage.setItem('activeHabitId', activeHabitId);
+            }
+            localStorage.setItem('reminderEnabled', document.getElementById('reminderToggle').checked);
+        }
+
+        // Create default habits for first-time users
+        function createDefaultHabits() {
+            const defaultHabits = [
+                {
+                    id: 'habit1',
+                    name: 'Drink Water',
+                    color: '#4f46e5',
+                    completedDays: {},
+                    notes: {}
+                },
+                {
+                    id: 'habit2',
+                    name: 'Exercise',
+                    color: '#10b981',
+                    completedDays: {},
+                    notes: {}
+                },
+                {
+                    id: 'habit3',
+                    name: 'Read',
+                    color: '#f59e0b',
+                    completedDays: {},
+                    notes: {}
                 }
-            });
+            ];
             
-            // Close modals when clicking outside
-            window.addEventListener('click', (e) => {
-                if (e.target === elements.settingsModal) {
-                    elements.settingsModal.style.display = 'none';
-                }
-                if (e.target === elements.listModal) {
-                    elements.listModal.style.display = 'none';
-                }
-            });
-            
-            // Event delegation for dynamic elements
-            elements.listsContainer.addEventListener('click', handleListClick);
-            elements.tasksContainer.addEventListener('click', handleTaskClick);
+            habits = defaultHabits;
+            activeHabitId = 'habit1';
+            saveToLocalStorage();
         }
 
-        // Handle list clicks (event delegation)
-        function handleListClick(e) {
-            const listItem = e.target.closest('.list-item');
-            if (!listItem) return;
-            
-            const listId = listItem.dataset.id;
-            
-            if (e.target.closest('.edit-list-btn')) {
-                const list = state.lists.find(l => l.id === listId);
-                if (list) openListModal('edit', list);
-            } else if (e.target.closest('.delete-list-btn')) {
-                deleteList(listId);
-            } else {
-                // Select list
-                state.currentListId = listId;
-                saveStateToStorage();
-                renderLists();
-                renderTasks();
-                updateProgress();
-            }
+        // Update current date in header
+        function updateCurrentDate() {
+            const now = new Date();
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            document.getElementById('currentDate').textContent = now.toLocaleDateString('en-US', options);
         }
 
-        // Handle task clicks (event delegation)
-        function handleTaskClick(e) {
-            const taskItem = e.target.closest('.task-item');
-            if (!taskItem) return;
+        // Render the habits list in sidebar
+        function renderHabitsList() {
+            const habitsList = document.getElementById('habitsList');
+            habitsList.innerHTML = '';
             
-            const taskId = taskItem.dataset.id;
-            
-            if (e.target.classList.contains('task-checkbox')) {
-                toggleTaskCompletion(taskId);
-            } else if (e.target.closest('.edit-task-btn')) {
-                // For simplicity, we'll just select the task for editing in details panel
-                selectTask(taskId);
-            } else if (e.target.closest('.delete-task-btn')) {
-                deleteTask(taskId);
-            } else {
-                selectTask(taskId);
-            }
-        }
-
-        // Render lists in sidebar
-        function renderLists() {
-            elements.listsContainer.innerHTML = '';
-            
-            state.lists.forEach(list => {
-                const listItem = document.createElement('li');
-                listItem.className = `list-item ${list.id === state.currentListId ? 'active' : ''}`;
-                listItem.dataset.id = list.id;
+            habits.forEach(habit => {
+                const streak = calculateStreak(habit);
+                const li = document.createElement('li');
+                li.className = `habit-item ${habit.id === activeHabitId ? 'active' : ''}`;
+                li.dataset.habitId = habit.id;
+                li.style.borderLeftColor = habit.color;
                 
-                // Get task count for this list
-                const taskCount = state.tasks.filter(task => task.listId === list.id).length;
-                const completedCount = state.tasks.filter(task => task.listId === list.id && task.completed).length;
-                
-                listItem.innerHTML = `
-                    <div class="list-name">
-                        <i class="${list.icon || 'fas fa-list'}"></i>
-                        <span>${list.name}</span>
-                        <span>(${completedCount}/${taskCount})</span>
+                li.innerHTML = `
+                    <div>
+                        <span class="habit-color" style="background-color: ${habit.color}"></span>
+                        ${habit.name}
                     </div>
-                    <div class="list-actions">
-                        <button class="edit-list-btn" title="Edit list">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                        <button class="delete-list-btn" title="Delete list">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </div>
+                    <span class="habit-streak">${streak} day${streak !== 1 ? 's' : ''}</span>
                 `;
                 
-                elements.listsContainer.appendChild(listItem);
+                li.addEventListener('click', () => switchActiveHabit(habit.id));
+                habitsList.appendChild(li);
             });
+        }
+
+        // Switch active habit
+        function switchActiveHabit(habitId) {
+            activeHabitId = habitId;
+            renderHabitsList();
+            generateCalendar(currentMonth, currentYear);
+            updateStreakDisplay();
+            saveToLocalStorage();
+        }
+
+        // Generate calendar for given month and year
+        function generateCalendar(month, year) {
+            const calendarGrid = document.getElementById('calendarGrid');
+            const calendarMonth = document.getElementById('calendarMonth');
             
-            // Update current list title
-            if (state.currentListId) {
-                const currentList = state.lists.find(list => list.id === state.currentListId);
-                if (currentList) {
-                    elements.currentListTitle.textContent = `${currentList.name} Tasks`;
+            // Update calendar month header
+            const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+                'July', 'August', 'September', 'October', 'November', 'December'];
+            calendarMonth.textContent = `${monthNames[month]} ${year}`;
+            
+            // Clear previous calendar
+            calendarGrid.innerHTML = '';
+            
+            // Get first day of month and total days in month
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            
+            // Add empty cells for days before the first day of month
+            for (let i = 0; i < firstDay; i++) {
+                const emptyDay = document.createElement('div');
+                emptyDay.className = 'day empty';
+                calendarGrid.appendChild(emptyDay);
+            }
+            
+            // Add cells for each day of the month
+            const today = new Date();
+            const isCurrentMonth = month === today.getMonth() && year === today.getFullYear();
+            
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dayElement = document.createElement('div');
+                dayElement.className = 'day';
+                dayElement.dataset.day = day;
+                dayElement.dataset.month = month;
+                dayElement.dataset.year = year;
+                
+                // Check if this day is today
+                if (isCurrentMonth && day === today.getDate()) {
+                    dayElement.classList.add('today');
+                    dayElement.style.backgroundColor = '#f0f9ff';
                 }
+                
+                // Check if this day is completed for active habit
+                const dateKey = `${year}-${month + 1}-${day}`;
+                const activeHabit = habits.find(h => h.id === activeHabitId);
+                
+                if (activeHabit && activeHabit.completedDays[dateKey]) {
+                    dayElement.classList.add('completed');
+                }
+                
+                // Add day number
+                const dayNumber = document.createElement('div');
+                dayNumber.className = 'day-number';
+                dayNumber.textContent = day;
+                dayElement.appendChild(dayNumber);
+                
+                // Add status indicator
+                const dayStatus = document.createElement('div');
+                dayStatus.className = 'day-status';
+                if (activeHabit && activeHabit.completedDays[dateKey]) {
+                    dayStatus.style.backgroundColor = activeHabit.color;
+                } else {
+                    dayStatus.style.backgroundColor = 'transparent';
+                }
+                dayElement.appendChild(dayStatus);
+                
+                // Add note indicator if note exists
+                if (activeHabit && activeHabit.notes[dateKey]) {
+                    const noteIndicator = document.createElement('div');
+                    noteIndicator.className = 'day-note-indicator';
+                    noteIndicator.innerHTML = '<i class="fas fa-sticky-note"></i>';
+                    dayElement.appendChild(noteIndicator);
+                }
+                
+                // Add tooltip
+                const tooltip = document.createElement('div');
+                tooltip.className = 'tooltip';
+                tooltip.textContent = `${monthNames[month]} ${day}, ${year}`;
+                
+                if (activeHabit && activeHabit.notes[dateKey]) {
+                    tooltip.textContent += ` - ${activeHabit.notes[dateKey]}`;
+                }
+                
+                dayElement.appendChild(tooltip);
+                
+                // Add click event
+                dayElement.addEventListener('click', () => openDayModal(day, month, year));
+                
+                calendarGrid.appendChild(dayElement);
             }
         }
 
-        // Render tasks based on current list and filter
-        function renderTasks() {
-            elements.tasksContainer.innerHTML = '';
+        // Calculate streak for a habit
+        function calculateStreak(habit) {
+            if (!habit || !habit.completedDays) return 0;
             
-            if (!state.currentListId) {
-                elements.tasksContainer.innerHTML = '<div class="no-task-selected"><p>Select a list to view tasks</p></div>';
-                return;
+            const dates = Object.keys(habit.completedDays).sort().reverse();
+            if (dates.length === 0) return 0;
+            
+            let streak = 0;
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
+            // Check if today is completed
+            const todayKey = `${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`;
+            const yesterday = new Date(today);
+            yesterday.setDate(yesterday.getDate() - 1);
+            const yesterdayKey = `${yesterday.getFullYear()}-${yesterday.getMonth() + 1}-${yesterday.getDate()}`;
+            
+            // If today is completed, start counting from today
+            let currentDate = habit.completedDays[todayKey] ? today : yesterday;
+            let currentKey = habit.completedDays[todayKey] ? todayKey : yesterdayKey;
+            
+            while (habit.completedDays[currentKey]) {
+                streak++;
+                
+                // Move to previous day
+                currentDate.setDate(currentDate.getDate() - 1);
+                currentKey = `${currentDate.getFullYear()}-${currentDate.getMonth() + 1}-${currentDate.getDate()}`;
             }
             
-            // Filter tasks by current list
-            let filteredTasks = state.tasks.filter(task => task.listId === state.currentListId);
+            return streak;
+        }
+
+        // Update streak display
+        function updateStreakDisplay() {
+            const activeHabit = habits.find(h => h.id === activeHabitId);
+            const streak = calculateStreak(activeHabit);
             
-            // Apply additional filter
-            if (state.currentFilter === 'active') {
-                filteredTasks = filteredTasks.filter(task => !task.completed);
-            } else if (state.currentFilter === 'completed') {
-                filteredTasks = filteredTasks.filter(task => task.completed);
-            }
+            // Update current streak
+            document.getElementById('currentStreak').textContent = `${streak} day${streak !== 1 ? 's' : ''}`;
             
-            if (filteredTasks.length === 0) {
-                let message = '';
-                if (state.currentFilter === 'all') {
-                    message = 'No tasks in this list. Add a task to get started!';
-                } else if (state.currentFilter === 'active') {
-                    message = 'No active tasks. All tasks are completed!';
-                } else {
-                    message = 'No completed tasks yet.';
+            // Update badges
+            const badgesContainer = document.getElementById('badgesContainer');
+            badgesContainer.innerHTML = '';
+            
+            const badgeMilestones = [3, 7, 14, 30, 60, 90];
+            
+            badgeMilestones.forEach(milestone => {
+                const badge = document.createElement('div');
+                badge.className = `badge ${streak >= milestone ? 'unlocked' : ''}`;
+                
+                if (streak === milestone) {
+                    badge.classList.add('new');
                 }
                 
-                elements.tasksContainer.innerHTML = `<div class="no-task-selected"><p>${message}</p></div>`;
-                return;
-            }
-            
-            // Sort tasks: incomplete first, then by priority (high to low), then by due date
-            filteredTasks.sort((a, b) => {
-                if (a.completed !== b.completed) return a.completed ? 1 : -1;
+                badge.innerHTML = `
+                    <i class="fas ${streak >= milestone ? 'fa-trophy' : 'fa-lock'}"></i>
+                    ${milestone}-day streak
+                `;
                 
-                const priorityOrder = { high: 3, medium: 2, low: 1 };
-                if (priorityOrder[a.priority] !== priorityOrder[b.priority]) {
-                    return priorityOrder[b.priority] - priorityOrder[a.priority];
-                }
-                
-                if (a.dueDate && b.dueDate) {
-                    return new Date(a.dueDate) - new Date(b.dueDate);
-                }
-                
-                return 0;
+                badgesContainer.appendChild(badge);
             });
+        }
+
+        // Open day modal
+        function openDayModal(day, month, year) {
+            selectedDay = { day, month, year };
             
-            // Render each task
-            filteredTasks.forEach(task => {
-                const taskItem = document.createElement('div');
-                taskItem.className = `task-item ${task.completed ? 'completed' : ''}`;
-                taskItem.dataset.id = task.id;
+            const date = new Date(year, month, day);
+            const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+                'July', 'August', 'September', 'October', 'November', 'December'];
+            
+            document.getElementById('modalDate').textContent = `${monthNames[month]} ${day}, ${year}`;
+            
+            // Load existing note if available
+            const dateKey = `${year}-${month + 1}-${day}`;
+            const activeHabit = habits.find(h => h.id === activeHabitId);
+            const existingNote = activeHabit && activeHabit.notes[dateKey] ? activeHabit.notes[dateKey] : '';
+            
+            document.getElementById('modalNotes').value = existingNote;
+            
+            // Show modal
+            document.getElementById('dayModal').style.display = 'flex';
+        }
+
+        // Close day modal
+        function closeDayModal() {
+            document.getElementById('dayModal').style.display = 'none';
+            selectedDay = null;
+        }
+
+        // Save day entry
+        function saveDayEntry() {
+            if (!selectedDay) return;
+            
+            const { day, month, year } = selectedDay;
+            const dateKey = `${year}-${month + 1}-${day}`;
+            const note = document.getElementById('modalNotes').value.trim();
+            const activeHabit = habits.find(h => h.id === activeHabitId);
+            
+            if (activeHabit) {
+                // Toggle completion if note is being added/updated
+                if (note || !activeHabit.notes[dateKey]) {
+                    activeHabit.completedDays[dateKey] = true;
+                }
                 
-                // Format due date
-                let dueDateDisplay = '';
-                let dueDateClass = 'task-due-date';
-                if (task.dueDate) {
-                    const dueDate = new Date(task.dueDate);
-                    const today = new Date();
-                    today.setHours(0, 0, 0, 0);
+                // Save note
+                if (note) {
+                    activeHabit.notes[dateKey] = note;
+                } else {
+                    delete activeHabit.notes[dateKey];
+                }
+                
+                // Update UI and save
+                generateCalendar(currentMonth, currentYear);
+                updateStreakDisplay();
+                renderHabitsList();
+                saveToLocalStorage();
+            }
+            
+            closeDayModal();
+        }
+
+        // Add new habit
+        function addNewHabit() {
+            const habitName = document.getElementById('habitName').value.trim();
+            const habitColor = document.getElementById('habitColor').value;
+            
+            if (!habitName) return;
+            
+            const newHabit = {
+                id: 'habit_' + Date.now(),
+                name: habitName,
+                color: habitColor,
+                completedDays: {},
+                notes: {}
+            };
+            
+            habits.push(newHabit);
+            
+            // Clear form
+            document.getElementById('habitName').value = '';
+            document.getElementById('habitColor').value = '#4f46e5';
+            
+            // Switch to new habit
+            switchActiveHabit(newHabit.id);
+        }
+
+        // Check and show reminder
+        function checkReminder() {
+            const reminderEnabled = document.getElementById('reminderToggle').checked;
+            
+            if (reminderEnabled) {
+                // For demonstration, show reminder after 2 seconds
+                // In a real app, this would check the current time
+                reminderTimeout = setTimeout(() => {
+                    document.getElementById('reminderBanner').style.display = 'flex';
+                }, 2000);
+            } else {
+                clearTimeout(reminderTimeout);
+                document.getElementById('reminderBanner').style.display = 'none';
+            }
+        }
+
+        // Export data to JSON
+        function exportData() {
+            const data = {
+                habits: habits,
+                activeHabitId: activeHabitId,
+                exportDate: new Date().toISOString()
+            };
+            
+            const dataStr = JSON.stringify(data, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(dataBlob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `habit-tracker-export-${new Date().toISOString().slice(0, 10)}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // Import data from JSON file
+        function importData() {
+            document.getElementById('importFile').click();
+        }
+
+        // Handle file import
+        function handleFileImport(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                try {
+                    const importedData = JSON.parse(event.target.result);
                     
-                    if (dueDate < today && !task.completed) {
-                        dueDateClass += ' overdue';
-                        dueDateDisplay = `Overdue: ${dueDate.toLocaleDateString()}`;
-                    } else {
-                        dueDateDisplay = dueDate.toLocaleDateString();
-                    }
-                }
-                
-                // Priority label
-                const priorityLabels = {
-                    low: { text: 'Low', class: 'priority-low' },
-                    medium: { text: 'Medium', class: 'priority-medium' },
-                    high: { text: 'High', class: 'priority-high' }
-                };
-                
-                const priority = priorityLabels[task.priority] || priorityLabels.medium;
-                
-                taskItem.innerHTML = `
-                    <input type="checkbox" class="task-checkbox" ${task.completed ? 'checked' : ''}>
-                    <div class="task-content">
-                        <div class="task-title">${task.title}</div>
-                        <div class="task-meta">
-                            <span class="task-priority ${priority.class}">${priority.text}</span>
-                            ${task.dueDate ? `<span class="${dueDateClass}"><i class="far fa-calendar"></i> ${dueDateDisplay}</span>` : ''}
-                        </div>
-                    </div>
-                    <div class="task-actions">
-                        <button class="edit-task-btn" title="Edit task">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                        <button class="delete-task-btn" title="Delete task">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </div>
-                `;
-                
-                elements.tasksContainer.appendChild(taskItem);
-            });
-        }
-
-        // Add a new task
-        function addTask(e) {
-            e.preventDefault();
-            
-            if (!elements.taskInput.value.trim() || !state.currentListId) return;
-            
-            const newTask = {
-                id: Date.now().toString(),
-                listId: state.currentListId,
-                title: elements.taskInput.value.trim(),
-                description: '',
-                dueDate: null,
-                priority: state.settings.defaultPriority,
-                completed: false,
-                createdAt: new Date().toISOString()
-            };
-            
-            state.tasks.push(newTask);
-            saveStateToStorage();
-            renderTasks();
-            updateProgress();
-            
-            // Clear input
-            elements.taskInput.value = '';
-            elements.taskInput.focus();
-            
-            // Select the new task
-            selectTask(newTask.id);
-        }
-
-        // Toggle task completion
-        function toggleTaskCompletion(taskId) {
-            const taskIndex = state.tasks.findIndex(task => task.id === taskId);
-            if (taskIndex === -1) return;
-            
-            const wasCompleted = state.tasks[taskIndex].completed;
-            state.tasks[taskIndex].completed = !wasCompleted;
-            
-            // Update session stats if task was just completed
-            if (!wasCompleted && state.tasks[taskIndex].completed) {
-                state.session.completedCount++;
-                updateSessionStats();
-            }
-            
-            saveStateToStorage();
-            renderTasks();
-            updateProgress();
-            
-            // If task details are open, update them
-            if (state.selectedTaskId === taskId) {
-                renderTaskDetails(taskId);
-            }
-            
-            // Auto-archive if enabled
-            if (state.settings.autoArchive && state.tasks[taskIndex].completed) {
-                setTimeout(() => {
-                    const taskElement = document.querySelector(`.task-item[data-id="${taskId}"]`);
-                    if (taskElement) {
-                        taskElement.style.opacity = '0.5';
-                        taskElement.style.transition = 'opacity 1s';
+                    if (importedData.habits && Array.isArray(importedData.habits)) {
+                        habits = importedData.habits;
                         
-                        setTimeout(() => {
-                            taskElement.style.opacity = '0';
-                            setTimeout(() => {
-                                const index = state.tasks.findIndex(t => t.id === taskId);
-                                if (index !== -1 && state.tasks[index].completed) {
-                                    state.tasks.splice(index, 1);
-                                    saveStateToStorage();
-                                    renderTasks();
-                                    updateProgress();
-                                    
-                                    if (state.selectedTaskId === taskId) {
-                                        state.selectedTaskId = null;
-                                        renderTaskDetails(null);
-                                    }
-                                }
-                            }, 300);
-                        }, 1000);
+                        if (importedData.activeHabitId) {
+                            activeHabitId = importedData.activeHabitId;
+                        } else if (habits.length > 0) {
+                            activeHabitId = habits[0].id;
+                        }
+                        
+                        // Update UI and save
+                        renderHabitsList();
+                        generateCalendar(currentMonth, currentYear);
+                        updateStreakDisplay();
+                        saveToLocalStorage();
+                        
+                        alert('Data imported successfully!');
+                    } else {
+                        alert('Invalid data format. Could not import.');
                     }
-                }, state.settings.archiveDelay * 1000);
-            }
-        }
-
-        // Delete a task
-        function deleteTask(taskId) {
-            state.tasks = state.tasks.filter(task => task.id !== taskId);
-            saveStateToStorage();
-            renderTasks();
-            updateProgress();
-            
-            if (state.selectedTaskId === taskId) {
-                state.selectedTaskId = null;
-                renderTaskDetails(null);
-            }
-        }
-
-        // Select a task to view/edit details
-        function selectTask(taskId) {
-            state.selectedTaskId = taskId;
-            renderTaskDetails(taskId);
-            
-            // On mobile, open details panel
-            if (window.innerWidth < 992) {
-                elements.detailsPanel.classList.add('open');
-                elements.toggleDetails.querySelector('i').className = 'fas fa-chevron-right';
-            }
-        }
-
-        // Render task details in right panel
-        function renderTaskDetails(taskId) {
-            if (!taskId) {
-                elements.taskDetails.innerHTML = `
-                    <div class="no-task-selected">
-                        <i class="fas fa-clipboard-list"></i>
-                        <p>Select a task to view details</p>
-                    </div>
-                `;
-                return;
-            }
-            
-            const task = state.tasks.find(t => t.id === taskId);
-            if (!task) return;
-            
-            // Format due date for input
-            const dueDateValue = task.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : '';
-            
-            elements.taskDetails.innerHTML = `
-                <div class="task-detail-item">
-                    <div class="detail-label">Title</div>
-                    <div class="detail-value" contenteditable="true" id="detailTitle">${task.title}</div>
-                </div>
-                <div class="task-detail-item">
-                    <div class="detail-label">Description</div>
-                    <div class="detail-value" contenteditable="true" id="detailDescription" placeholder="Add description...">${task.description || ''}</div>
-                </div>
-                <div class="task-detail-item">
-                    <div class="detail-label">Due Date</div>
-                    <input type="date" class="form-control" id="detailDueDate" value="${dueDateValue}">
-                </div>
-                <div class="task-detail-item">
-                    <div class="detail-label">Priority</div>
-                    <select class="form-control" id="detailPriority">
-                        <option value="low" ${task.priority === 'low' ? 'selected' : ''}>Low</option>
-                        <option value="medium" ${task.priority === 'medium' ? 'selected' : ''}>Medium</option>
-                        <option value="high" ${task.priority === 'high' ? 'selected' : ''}>High</option>
-                    </select>
-                </div>
-                <div class="task-detail-item">
-                    <div class="detail-label">Status</div>
-                    <div class="detail-value">
-                        <label>
-                            <input type="checkbox" id="detailCompleted" ${task.completed ? 'checked' : ''}> Completed
-                        </label>
-                    </div>
-                </div>
-                <div class="task-detail-item">
-                    <div class="detail-label">Created</div>
-                    <div class="detail-value">${new Date(task.createdAt).toLocaleDateString()}</div>
-                </div>
-                <div class="modal-footer">
-                    <button class="btn btn-primary" id="saveTaskDetailsBtn">Save Changes</button>
-                </div>
-            `;
-            
-            // Add event listeners to detail fields
-            document.getElementById('saveTaskDetailsBtn').addEventListener('click', () => saveTaskDetails(taskId));
-            
-            // Auto-save when content is changed
-            const detailFields = ['detailTitle', 'detailDescription'];
-            detailFields.forEach(fieldId => {
-                const field = document.getElementById(fieldId);
-                if (field) {
-                    field.addEventListener('blur', () => saveTaskDetails(taskId));
+                } catch (error) {
+                    alert('Error importing data: ' + error.message);
                 }
-            });
-            
-            document.getElementById('detailDueDate').addEventListener('change', () => saveTaskDetails(taskId));
-            document.getElementById('detailPriority').addEventListener('change', () => saveTaskDetails(taskId));
-            document.getElementById('detailCompleted').addEventListener('change', () => {
-                saveTaskDetails(taskId);
-                // Also toggle completion in main list
-                toggleTaskCompletion(taskId);
-            });
-        }
-
-        // Save task details
-        function saveTaskDetails(taskId) {
-            const taskIndex = state.tasks.findIndex(task => task.id === taskId);
-            if (taskIndex === -1) return;
-            
-            const titleEl = document.getElementById('detailTitle');
-            const descriptionEl = document.getElementById('detailDescription');
-            const dueDateEl = document.getElementById('detailDueDate');
-            const priorityEl = document.getElementById('detailPriority');
-            const completedEl = document.getElementById('detailCompleted');
-            
-            if (titleEl) state.tasks[taskIndex].title = titleEl.textContent;
-            if (descriptionEl) state.tasks[taskIndex].description = descriptionEl.textContent;
-            if (dueDateEl) state.tasks[taskIndex].dueDate = dueDateEl.value ? new Date(dueDateEl.value).toISOString() : null;
-            if (priorityEl) state.tasks[taskIndex].priority = priorityEl.value;
-            if (completedEl) state.tasks[taskIndex].completed = completedEl.checked;
-            
-            saveStateToStorage();
-            renderTasks();
-            updateProgress();
-        }
-
-        // Clear completed tasks in current list
-        function clearCompletedTasks() {
-            if (!state.currentListId) return;
-            
-            // Update session stats
-            const completedTasks = state.tasks.filter(task => 
-                task.listId === state.currentListId && task.completed
-            );
-            state.session.completedCount += completedTasks.length;
-            updateSessionStats();
-            
-            // Remove completed tasks
-            state.tasks = state.tasks.filter(task => 
-                !(task.listId === state.currentListId && task.completed)
-            );
-            
-            saveStateToStorage();
-            renderTasks();
-            updateProgress();
-            
-            // Clear selection if selected task was completed
-            if (state.selectedTaskId) {
-                const selectedTask = state.tasks.find(t => t.id === state.selectedTaskId);
-                if (!selectedTask) {
-                    state.selectedTaskId = null;
-                    renderTaskDetails(null);
-                }
-            }
-        }
-
-        // Update progress bar
-        function updateProgress() {
-            if (!state.currentListId) {
-                elements.progressBar.style.width = '0%';
-                elements.progressText.textContent = '0% Complete';
-                return;
-            }
-            
-            const listTasks = state.tasks.filter(task => task.listId === state.currentListId);
-            if (listTasks.length === 0) {
-                elements.progressBar.style.width = '0%';
-                elements.progressText.textContent = '0% Complete';
-                return;
-            }
-            
-            const completedTasks = listTasks.filter(task => task.completed);
-            const percentage = Math.round((completedTasks.length / listTasks.length) * 100);
-            
-            elements.progressBar.style.width = `${percentage}%`;
-            elements.progressText.textContent = `${percentage}% Complete`;
-        }
-
-        // Open list modal (add or edit)
-        function openListModal(mode, list = null) {
-            elements.listModal.style.display = 'flex';
-            
-            if (mode === 'add') {
-                elements.listModalTitle.textContent = 'Add New List';
-                elements.listName.value = '';
-                elements.saveListBtn.dataset.mode = 'add';
-            } else if (mode === 'edit' && list) {
-                elements.listModalTitle.textContent = 'Edit List';
-                elements.listName.value = list.name;
-                elements.saveListBtn.dataset.mode = 'edit';
-                elements.saveListBtn.dataset.id = list.id;
-            }
-        }
-
-        // Save list (add or edit)
-        function saveList() {
-            const mode = elements.saveListBtn.dataset.mode;
-            const name = elements.listName.value.trim();
-            
-            if (!name) return;
-            
-            if (mode === 'add') {
-                const newList = {
-                    id: Date.now().toString(),
-                    name: name,
-                    icon: 'fas fa-list'
-                };
-                state.lists.push(newList);
-            } else if (mode === 'edit') {
-                const listId = elements.saveListBtn.dataset.id;
-                const listIndex = state.lists.findIndex(list => list.id === listId);
-                if (listIndex !== -1) {
-                    state.lists[listIndex].name = name;
-                }
-            }
-            
-            saveStateToStorage();
-            renderLists();
-            elements.listModal.style.display = 'none';
-        }
-
-        // Delete a list
-        function deleteList(listId) {
-            if (state.lists.length <= 1) {
-                alert('You must have at least one list');
-                return;
-            }
-            
-            // Confirm deletion
-            if (!confirm('Delete this list and all its tasks?')) return;
-            
-            // Remove list
-            state.lists = state.lists.filter(list => list.id !== listId);
-            
-            // Remove tasks associated with this list
-            state.tasks = state.tasks.filter(task => task.listId !== listId);
-            
-            // Update current list if needed
-            if (state.currentListId === listId) {
-                state.currentListId = state.lists[0]?.id || null;
-            }
-            
-            saveStateToStorage();
-            renderLists();
-            renderTasks();
-            updateProgress();
-            
-            // Clear selection if needed
-            if (state.selectedTaskId) {
-                const selectedTask = state.tasks.find(t => t.id === state.selectedTaskId);
-                if (!selectedTask) {
-                    state.selectedTaskId = null;
-                    renderTaskDetails(null);
-                }
-            }
-        }
-
-        // Save settings
-        function saveSettings() {
-            state.settings = {
-                autoArchive: elements.autoArchive.checked,
-                archiveDelay: parseInt(elements.archiveDelay.value),
-                defaultPriority: elements.defaultPriority.value
             };
             
-            saveStateToStorage();
-            elements.settingsModal.style.display = 'none';
-        }
-
-        // Update session statistics
-        function updateSessionStats() {
-            elements.sessionCompleted.textContent = state.session.completedCount;
+            reader.readAsText(file);
             
-            // Calculate time spent in minutes
-            const minutes = Math.floor(state.session.timeSpent / 60000);
-            elements.sessionTime.textContent = `${minutes}m`;
+            // Reset file input
+            e.target.value = '';
+        }
+
+        // Set up event listeners
+        function setupEventListeners() {
+            // Calendar navigation
+            document.getElementById('prevMonth').addEventListener('click', () => {
+                currentMonth--;
+                if (currentMonth < 0) {
+                    currentMonth = 11;
+                    currentYear--;
+                }
+                generateCalendar(currentMonth, currentYear);
+            });
             
-            saveStateToStorage();
+            document.getElementById('nextMonth').addEventListener('click', () => {
+                currentMonth++;
+                if (currentMonth > 11) {
+                    currentMonth = 0;
+                    currentYear++;
+                }
+                generateCalendar(currentMonth, currentYear);
+            });
+            
+            document.getElementById('todayMonth').addEventListener('click', () => {
+                const today = new Date();
+                currentMonth = today.getMonth();
+                currentYear = today.getFullYear();
+                generateCalendar(currentMonth, currentYear);
+            });
+            
+            // Add habit form
+            document.getElementById('addHabitForm').addEventListener('submit', (e) => {
+                e.preventDefault();
+                addNewHabit();
+            });
+            
+            // Modal buttons
+            document.getElementById('closeModal').addEventListener('click', closeDayModal);
+            document.getElementById('cancelModal').addEventListener('click', closeDayModal);
+            document.getElementById('saveModal').addEventListener('click', saveDayEntry);
+            
+            // Reminder toggle
+            document.getElementById('reminderToggle').addEventListener('change', () => {
+                checkReminder();
+                saveToLocalStorage();
+            });
+            
+            // Dismiss reminder
+            document.getElementById('dismissReminder').addEventListener('click', () => {
+                document.getElementById('reminderBanner').style.display = 'none';
+            });
+            
+            // Export/import buttons
+            document.getElementById('exportData').addEventListener('click', exportData);
+            document.getElementById('importData').addEventListener('click', importData);
+            document.getElementById('importFile').addEventListener('change', handleFileImport);
+            
+            // Close modal when clicking outside
+            document.getElementById('dayModal').addEventListener('click', (e) => {
+                if (e.target === document.getElementById('dayModal')) {
+                    closeDayModal();
+                }
+            });
         }
-
-        // Start session timer
-        function startSessionTimer() {
-            setInterval(() => {
-                state.session.timeSpent += 60000; // Add one minute
-                updateSessionStats();
-            }, 60000);
-        }
-
-        // Initialize the app when DOM is loaded
-        document.addEventListener('DOMContentLoaded', init);
     </script>
 </body>
 </html>
