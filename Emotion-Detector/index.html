@@ -1,0 +1,1358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Emotion Detection | Text & Voice Analysis</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            color: white;
+            padding: 30px 0;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        
+        h1 {
+            font-size: 2.8rem;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .app-description {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+        
+        .app-description p {
+            margin-bottom: 15px;
+        }
+        
+        .tabs {
+            display: flex;
+            margin-bottom: 30px;
+            background-color: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+        
+        .tab {
+            flex: 1;
+            padding: 18px;
+            text-align: center;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            border-bottom: 3px solid transparent;
+        }
+        
+        .tab:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .tab.active {
+            color: #2575fc;
+            border-bottom: 3px solid #2575fc;
+            background-color: #f0f7ff;
+        }
+        
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .input-section {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+        
+        .section-title {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            color: #2575fc;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .section-title i {
+            font-size: 1.3rem;
+        }
+        
+        textarea {
+            width: 100%;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            resize: vertical;
+            min-height: 120px;
+            margin-bottom: 20px;
+            transition: border 0.3s;
+        }
+        
+        textarea:focus {
+            outline: none;
+            border-color: #2575fc;
+        }
+        
+        .buttons {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background-color: #2575fc;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: #1c65e0;
+            transform: translateY(-2px);
+        }
+        
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #5a6268;
+            transform: translateY(-2px);
+        }
+        
+        .btn-success {
+            background-color: #28a745;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background-color: #218838;
+            transform: translateY(-2px);
+        }
+        
+        .voice-controls {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .voice-status {
+            padding: 10px 15px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .pulse {
+            width: 12px;
+            height: 12px;
+            background-color: #28a745;
+            border-radius: 50%;
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(2); opacity: 0; }
+        }
+        
+        .results-section {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            margin-bottom: 30px;
+        }
+        
+        .emotion-result {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        
+        .emotion-display {
+            font-size: 3rem;
+            margin-bottom: 15px;
+        }
+        
+        .emotion-text {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        
+        .emotion-confidence {
+            font-size: 1.2rem;
+            color: #6c757d;
+        }
+        
+        .charts-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .chart-box {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+        
+        .emotion-breakdown {
+            margin-top: 30px;
+        }
+        
+        .emotion-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .emotion-name {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .emotion-bar {
+            height: 8px;
+            background-color: #e9ecef;
+            border-radius: 4px;
+            margin-top: 5px;
+            overflow: hidden;
+        }
+        
+        .emotion-fill {
+            height: 100%;
+            border-radius: 4px;
+        }
+        
+        .use-cases {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+        
+        .use-case {
+            background-color: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+        
+        .use-case h3 {
+            margin-bottom: 15px;
+            color: #2575fc;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .insight {
+            background-color: #f0f7ff;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            border-left: 4px solid #2575fc;
+        }
+        
+        .sample-texts {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+        
+        .sample-text {
+            padding: 10px 15px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .sample-text:hover {
+            background-color: #e9ecef;
+            transform: translateY(-2px);
+        }
+        
+        .history {
+            margin-top: 30px;
+        }
+        
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border-left: 4px solid #2575fc;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 20px;
+            color: #6c757d;
+            margin-top: 30px;
+            border-top: 1px solid #eee;
+        }
+        
+        @media (max-width: 992px) {
+            .charts-container, .use-cases {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .tabs {
+                flex-direction: column;
+            }
+            
+            .buttons {
+                flex-direction: column;
+            }
+            
+            .btn {
+                justify-content: center;
+            }
+            
+            h1 {
+                font-size: 2.2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-brain"></i> Emotion Detection</h1>
+            <p class="subtitle">Detect emotions from text or voice for mental health monitoring and customer feedback analysis</p>
+        </header>
+        
+        <div class="app-description">
+            <p>This tool uses AI-powered emotion detection to analyze text or voice inputs and identify emotional states. It's designed for both mental health monitoring (to track emotional well-being) and customer feedback analysis (to understand customer sentiment).</p>
+            <p>Try typing your own text, speaking into your microphone, or using one of the sample phrases below.</p>
+        </div>
+        
+        <div class="tabs">
+            <div class="tab active" data-tab="text-analysis">Text Analysis</div>
+            <div class="tab" data-tab="voice-analysis">Voice Analysis</div>
+            <div class="tab" data-tab="mental-health">Mental Health Dashboard</div>
+            <div class="tab" data-tab="customer-feedback">Customer Feedback</div>
+        </div>
+        
+        <!-- Text Analysis Tab -->
+        <div class="tab-content active" id="text-analysis">
+            <div class="input-section">
+                <h2 class="section-title"><i class="fas fa-keyboard"></i> Text Emotion Detection</h2>
+                <p>Enter text below to analyze emotional content:</p>
+                <textarea id="textInput" placeholder="Type or paste your text here...">I'm feeling really happy today! The sun is shining and I just got great news about my project. Everything seems to be going well for me.</textarea>
+                
+                <div class="buttons">
+                    <button class="btn btn-primary" id="analyzeTextBtn">
+                        <i class="fas fa-search"></i> Analyze Text
+                    </button>
+                    <button class="btn btn-secondary" id="clearTextBtn">
+                        <i class="fas fa-trash"></i> Clear Text
+                    </button>
+                </div>
+                
+                <div class="sample-texts">
+                    <div class="sample-text" data-text="I'm feeling really anxious about my upcoming presentation. I can't sleep and my heart races when I think about it.">Anxiety Sample</div>
+                    <div class="sample-text" data-text="I'm so angry right now! The service was terrible and they didn't even apologize for the mistake.">Anger Sample</div>
+                    <div class="sample-text" data-text="I feel peaceful and content. Everything in my life is balanced and I'm grateful for what I have.">Contentment Sample</div>
+                    <div class="sample-text" data-text="I'm really sad and lonely today. I miss my friends and don't have energy to do anything.">Sadness Sample</div>
+                </div>
+            </div>
+            
+            <div class="results-section">
+                <h2 class="section-title"><i class="fas fa-chart-bar"></i> Analysis Results</h2>
+                <div class="emotion-result">
+                    <div class="emotion-display" id="emotionDisplay">😊</div>
+                    <div class="emotion-text" id="emotionText">Happy</div>
+                    <div class="emotion-confidence" id="emotionConfidence">Confidence: 87%</div>
+                </div>
+                
+                <div class="charts-container">
+                    <div class="chart-box">
+                        <canvas id="emotionChart"></canvas>
+                    </div>
+                    <div class="chart-box">
+                        <canvas id="sentimentChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="emotion-breakdown">
+                    <h3 class="section-title"><i class="fas fa-list"></i> Emotion Breakdown</h3>
+                    <div id="emotionBreakdown">
+                        <!-- Emotion items will be generated here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Voice Analysis Tab -->
+        <div class="tab-content" id="voice-analysis">
+            <div class="input-section">
+                <h2 class="section-title"><i class="fas fa-microphone"></i> Voice Emotion Detection</h2>
+                <p>Click the button below and speak into your microphone. The system will analyze your voice for emotional cues.</p>
+                
+                <div class="buttons">
+                    <button class="btn btn-primary" id="startRecordingBtn">
+                        <i class="fas fa-microphone"></i> Start Recording
+                    </button>
+                    <button class="btn btn-secondary" id="stopRecordingBtn" disabled>
+                        <i class="fas fa-stop"></i> Stop Recording
+                    </button>
+                    <button class="btn btn-success" id="analyzeVoiceBtn" disabled>
+                        <i class="fas fa-search"></i> Analyze Voice
+                    </button>
+                </div>
+                
+                <div class="voice-controls">
+                    <div class="voice-status">
+                        <div id="statusIndicator" class="pulse" style="display: none;"></div>
+                        <span id="statusText">Ready to record</span>
+                    </div>
+                    
+                    <div id="voiceInputDisplay" style="flex-grow: 1;">
+                        <textarea id="voiceInput" placeholder="Your speech will appear here..." readonly></textarea>
+                    </div>
+                </div>
+                
+                <div class="sample-texts">
+                    <p><strong>Try saying:</strong> "I'm really excited about the new opportunities coming my way!" (Happy)</p>
+                    <p><strong>Or:</strong> "I'm feeling quite worried about all the work I need to complete." (Anxious)</p>
+                </div>
+            </div>
+            
+            <div class="results-section">
+                <h2 class="section-title"><i class="fas fa-chart-bar"></i> Voice Analysis Results</h2>
+                <div class="emotion-result">
+                    <div class="emotion-display" id="voiceEmotionDisplay">🎤</div>
+                    <div class="emotion-text" id="voiceEmotionText">Waiting for analysis</div>
+                    <div class="emotion-confidence" id="voiceEmotionConfidence">Speak to see results</div>
+                </div>
+                
+                <div class="charts-container">
+                    <div class="chart-box">
+                        <canvas id="voiceEmotionChart"></canvas>
+                    </div>
+                    <div class="chart-box">
+                        <canvas id="voicePitchChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Mental Health Dashboard Tab -->
+        <div class="tab-content" id="mental-health">
+            <div class="input-section">
+                <h2 class="section-title"><i class="fas fa-heartbeat"></i> Mental Health Monitoring</h2>
+                <p>Track your emotional well-being over time. Add daily entries to monitor patterns and receive insights.</p>
+                
+                <div class="buttons">
+                    <button class="btn btn-primary" id="addEntryBtn">
+                        <i class="fas fa-plus"></i> Add Today's Entry
+                    </button>
+                    <button class="btn btn-secondary" id="viewTrendsBtn">
+                        <i class="fas fa-chart-line"></i> View Trends
+                    </button>
+                </div>
+                
+                <div class="insight">
+                    <p><strong>Today's Insight:</strong> Based on your recent entries, you seem to be experiencing more positive emotions this week compared to last week. Keep engaging in activities that bring you joy!</p>
+                </div>
+            </div>
+            
+            <div class="use-case">
+                <h3><i class="fas fa-calendar-check"></i> Weekly Emotion Tracker</h3>
+                <div class="chart-box">
+                    <canvas id="weeklyEmotionChart"></canvas>
+                </div>
+                
+                <div class="history">
+                    <h3 class="section-title"><i class="fas fa-history"></i> Recent Entries</h3>
+                    <div id="mentalHealthHistory">
+                        <!-- History items will be generated here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Customer Feedback Tab -->
+        <div class="tab-content" id="customer-feedback">
+            <div class="input-section">
+                <h2 class="section-title"><i class="fas fa-comments"></i> Customer Feedback Analysis</h2>
+                <p>Analyze customer feedback to understand sentiment and emotional responses to your products or services.</p>
+                
+                <textarea id="feedbackInput" placeholder="Paste customer feedback here...">The product is amazing! It has completely transformed how I work. However, the delivery was delayed which was frustrating.</textarea>
+                
+                <div class="buttons">
+                    <button class="btn btn-primary" id="analyzeFeedbackBtn">
+                        <i class="fas fa-chart-pie"></i> Analyze Feedback
+                    </button>
+                    <button class="btn btn-secondary" id="loadSampleFeedbackBtn">
+                        <i class="fas fa-download"></i> Load Sample Feedback
+                    </button>
+                </div>
+            </div>
+            
+            <div class="use-cases">
+                <div class="use-case">
+                    <h3><i class="fas fa-thumbs-up"></i> Overall Sentiment</h3>
+                    <div class="emotion-result">
+                        <div class="emotion-display" id="feedbackEmotionDisplay">😊</div>
+                        <div class="emotion-text" id="feedbackEmotionText">Mixed</div>
+                        <div class="emotion-confidence" id="feedbackEmotionConfidence">Positive: 65% | Negative: 35%</div>
+                    </div>
+                    
+                    <div class="insight">
+                        <p><strong>Insight:</strong> Customers generally like your product but have concerns about delivery times. Consider improving logistics communication.</p>
+                    </div>
+                </div>
+                
+                <div class="use-case">
+                    <h3><i class="fas fa-lightbulb"></i> Actionable Insights</h3>
+                    <ul style="padding-left: 20px; margin-top: 15px;">
+                        <li style="margin-bottom: 10px;">Positive feedback highlights product quality</li>
+                        <li style="margin-bottom: 10px;">Negative feedback focuses on delivery issues</li>
+                        <li style="margin-bottom: 10px;">Consider adding delivery tracking features</li>
+                        <li style="margin-bottom: 10px;">Response time to complaints is a key improvement area</li>
+                    </ul>
+                    
+                    <div class="chart-box" style="margin-top: 20px;">
+                        <canvas id="feedbackChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <footer>
+            <p>Emotion Detection Tool &copy; 2023 | For mental health monitoring and customer feedback analysis</p>
+            <p>Note: This is a demonstration tool. For clinical mental health assessments, consult a healthcare professional.</p>
+        </footer>
+    </div>
+
+    <script>
+        // DOM Elements
+        const textInput = document.getElementById('textInput');
+        const analyzeTextBtn = document.getElementById('analyzeTextBtn');
+        const clearTextBtn = document.getElementById('clearTextBtn');
+        const emotionDisplay = document.getElementById('emotionDisplay');
+        const emotionText = document.getElementById('emotionText');
+        const emotionConfidence = document.getElementById('emotionConfidence');
+        const emotionBreakdown = document.getElementById('emotionBreakdown');
+        
+        // Voice Analysis Elements
+        const startRecordingBtn = document.getElementById('startRecordingBtn');
+        const stopRecordingBtn = document.getElementById('stopRecordingBtn');
+        const analyzeVoiceBtn = document.getElementById('analyzeVoiceBtn');
+        const voiceInput = document.getElementById('voiceInput');
+        const statusIndicator = document.getElementById('statusIndicator');
+        const statusText = document.getElementById('statusText');
+        const voiceEmotionDisplay = document.getElementById('voiceEmotionDisplay');
+        const voiceEmotionText = document.getElementById('voiceEmotionText');
+        const voiceEmotionConfidence = document.getElementById('voiceEmotionConfidence');
+        
+        // Tab Management
+        const tabs = document.querySelectorAll('.tab');
+        const tabContents = document.querySelectorAll('.tab-content');
+        
+        // Chart instances
+        let emotionChart, sentimentChart, voiceEmotionChart, voicePitchChart;
+        let weeklyEmotionChart, feedbackChart;
+        
+        // Voice recording variables
+        let mediaRecorder;
+        let audioChunks = [];
+        let isRecording = false;
+        let speechRecognition;
+        
+        // Emotion data
+        const emotions = {
+            happy: { emoji: "😊", color: "#4CAF50" },
+            sad: { emoji: "😢", color: "#2196F3" },
+            angry: { emoji: "😠", color: "#F44336" },
+            anxious: { emoji: "😰", color: "#FF9800" },
+            excited: { emoji: "🎉", color: "#9C27B0" },
+            neutral: { emoji: "😐", color: "#9E9E9E" },
+            content: { emoji: "😌", color: "#8BC34A" },
+            surprised: { emoji: "😲", color: "#FFC107" }
+        };
+        
+        // Sample mental health history
+        const mentalHealthHistoryData = [
+            { date: "2023-10-15", emotion: "happy", note: "Had a great day with friends" },
+            { date: "2023-10-14", emotion: "neutral", note: "Regular work day" },
+            { date: "2023-10-13", emotion: "anxious", note: "Stressed about upcoming deadline" },
+            { date: "2023-10-12", emotion: "content", note: "Peaceful evening reading" },
+            { date: "2023-10-11", emotion: "sad", note: "Feeling a bit lonely" }
+        ];
+        
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeCharts();
+            setupEventListeners();
+            analyzeText(); // Run initial analysis on sample text
+            loadMentalHealthHistory();
+            setupSampleTexts();
+        });
+        
+        // Initialize all charts
+        function initializeCharts() {
+            // Text Emotion Chart
+            const emotionCtx = document.getElementById('emotionChart').getContext('2d');
+            emotionChart = new Chart(emotionCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Happy', 'Sad', 'Angry', 'Anxious', 'Excited', 'Neutral'],
+                    datasets: [{
+                        data: [40, 15, 5, 10, 20, 10],
+                        backgroundColor: [
+                            emotions.happy.color,
+                            emotions.sad.color,
+                            emotions.angry.color,
+                            emotions.anxious.color,
+                            emotions.excited.color,
+                            emotions.neutral.color
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        },
+                        title: {
+                            display: true,
+                            text: 'Emotion Distribution'
+                        }
+                    }
+                }
+            });
+            
+            // Sentiment Chart
+            const sentimentCtx = document.getElementById('sentimentChart').getContext('2d');
+            sentimentChart = new Chart(sentimentCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Positive', 'Negative', 'Neutral'],
+                    datasets: [{
+                        label: 'Sentiment Score',
+                        data: [75, 10, 15],
+                        backgroundColor: [
+                            '#4CAF50',
+                            '#F44336',
+                            '#FFC107'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        title: {
+                            display: true,
+                            text: 'Sentiment Analysis'
+                        }
+                    }
+                }
+            });
+            
+            // Voice Emotion Chart
+            const voiceEmotionCtx = document.getElementById('voiceEmotionChart').getContext('2d');
+            voiceEmotionChart = new Chart(voiceEmotionCtx, {
+                type: 'radar',
+                data: {
+                    labels: ['Happiness', 'Sadness', 'Anger', 'Anxiety', 'Excitement', 'Calmness'],
+                    datasets: [{
+                        label: 'Voice Emotion Profile',
+                        data: [65, 20, 10, 25, 40, 30],
+                        backgroundColor: 'rgba(37, 117, 252, 0.2)',
+                        borderColor: '#2575fc',
+                        borderWidth: 2,
+                        pointBackgroundColor: '#2575fc'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        r: {
+                            beginAtZero: true,
+                            max: 100
+                        }
+                    },
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Voice Emotion Profile'
+                        }
+                    }
+                }
+            });
+            
+            // Voice Pitch Chart
+            const voicePitchCtx = document.getElementById('voicePitchChart').getContext('2d');
+            voicePitchChart = new Chart(voicePitchCtx, {
+                type: 'line',
+                data: {
+                    labels: ['0s', '1s', '2s', '3s', '4s', '5s'],
+                    datasets: [{
+                        label: 'Pitch Variation',
+                        data: [120, 145, 160, 130, 110, 125],
+                        borderColor: '#9C27B0',
+                        backgroundColor: 'rgba(156, 39, 176, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            title: {
+                                display: true,
+                                text: 'Pitch (Hz)'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Time'
+                            }
+                        }
+                    },
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Voice Pitch Analysis'
+                        }
+                    }
+                }
+            });
+            
+            // Weekly Emotion Chart
+            const weeklyEmotionCtx = document.getElementById('weeklyEmotionChart').getContext('2d');
+            weeklyEmotionChart = new Chart(weeklyEmotionCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                    datasets: [
+                        {
+                            label: 'Happiness',
+                            data: [65, 70, 75, 80, 85, 90, 85],
+                            borderColor: emotions.happy.color,
+                            backgroundColor: 'transparent',
+                            borderWidth: 3,
+                            tension: 0.4
+                        },
+                        {
+                            label: 'Anxiety',
+                            data: [40, 35, 30, 25, 20, 15, 10],
+                            borderColor: emotions.anxious.color,
+                            backgroundColor: 'transparent',
+                            borderWidth: 3,
+                            tension: 0.4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100
+                        }
+                    },
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Weekly Emotion Trends'
+                        }
+                    }
+                }
+            });
+            
+            // Feedback Chart
+            const feedbackCtx = document.getElementById('feedbackChart').getContext('2d');
+            feedbackChart = new Chart(feedbackCtx, {
+                type: 'polarArea',
+                data: {
+                    labels: ['Product Quality', 'Delivery', 'Customer Service', 'Price', 'Ease of Use'],
+                    datasets: [{
+                        data: [85, 45, 70, 60, 80],
+                        backgroundColor: [
+                            '#4CAF50',
+                            '#F44336',
+                            '#2196F3',
+                            '#FF9800',
+                            '#9C27B0'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Feedback Category Analysis'
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Set up event listeners
+        function setupEventListeners() {
+            // Tab switching
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const tabId = tab.getAttribute('data-tab');
+                    switchTab(tabId);
+                });
+            });
+            
+            // Text analysis
+            analyzeTextBtn.addEventListener('click', analyzeText);
+            clearTextBtn.addEventListener('click', () => {
+                textInput.value = '';
+                emotionDisplay.textContent = '📝';
+                emotionText.textContent = 'Enter text to analyze';
+                emotionConfidence.textContent = 'Confidence: 0%';
+                emotionBreakdown.innerHTML = '';
+                
+                // Reset charts
+                emotionChart.data.datasets[0].data = [0, 0, 0, 0, 0, 0];
+                emotionChart.update();
+                
+                sentimentChart.data.datasets[0].data = [0, 0, 0];
+                sentimentChart.update();
+            });
+            
+            // Voice analysis
+            startRecordingBtn.addEventListener('click', startRecording);
+            stopRecordingBtn.addEventListener('click', stopRecording);
+            analyzeVoiceBtn.addEventListener('click', analyzeVoice);
+            
+            // Mental health
+            document.getElementById('addEntryBtn').addEventListener('click', addMentalHealthEntry);
+            document.getElementById('viewTrendsBtn').addEventListener('click', viewTrends);
+            
+            // Customer feedback
+            document.getElementById('analyzeFeedbackBtn').addEventListener('click', analyzeFeedback);
+            document.getElementById('loadSampleFeedbackBtn').addEventListener('click', loadSampleFeedback);
+            
+            // Check if browser supports speech recognition
+            if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                speechRecognition = new SpeechRecognition();
+                speechRecognition.continuous = true;
+                speechRecognition.interimResults = true;
+                
+                speechRecognition.onresult = (event) => {
+                    let transcript = '';
+                    for (let i = event.resultIndex; i < event.results.length; i++) {
+                        transcript += event.results[i][0].transcript;
+                    }
+                    voiceInput.value = transcript;
+                };
+                
+                speechRecognition.onerror = (event) => {
+                    console.error('Speech recognition error', event.error);
+                    statusText.textContent = `Error: ${event.error}`;
+                    statusIndicator.style.display = 'none';
+                };
+                
+                speechRecognition.onend = () => {
+                    if (isRecording) {
+                        // If still supposed to be recording, restart
+                        speechRecognition.start();
+                    }
+                };
+            } else {
+                startRecordingBtn.disabled = true;
+                startRecordingBtn.innerHTML = '<i class="fas fa-microphone-slash"></i> Browser Not Supported';
+                statusText.textContent = 'Speech recognition not supported in this browser';
+            }
+        }
+        
+        // Set up sample text click events
+        function setupSampleTexts() {
+            document.querySelectorAll('.sample-text').forEach(sample => {
+                sample.addEventListener('click', () => {
+                    const text = sample.getAttribute('data-text');
+                    if (sample.closest('#text-analysis')) {
+                        textInput.value = text;
+                        analyzeText();
+                    }
+                });
+            });
+        }
+        
+        // Switch between tabs
+        function switchTab(tabId) {
+            // Update active tab
+            tabs.forEach(tab => {
+                if (tab.getAttribute('data-tab') === tabId) {
+                    tab.classList.add('active');
+                } else {
+                    tab.classList.remove('active');
+                }
+            });
+            
+            // Update active tab content
+            tabContents.forEach(content => {
+                if (content.id === tabId) {
+                    content.classList.add('active');
+                } else {
+                    content.classList.remove('active');
+                }
+            });
+            
+            // If switching to voice tab, stop any ongoing recording
+            if (tabId !== 'voice-analysis' && isRecording) {
+                stopRecording();
+            }
+        }
+        
+        // Analyze text for emotions
+        function analyzeText() {
+            const text = textInput.value.trim();
+            
+            if (!text) {
+                alert('Please enter some text to analyze');
+                return;
+            }
+            
+            // Simulate API call with a delay
+            setTimeout(() => {
+                // For demo purposes, generate emotion based on keywords
+                const detectedEmotion = detectEmotionFromText(text);
+                const confidence = Math.floor(Math.random() * 30) + 70; // 70-100%
+                
+                // Update UI
+                emotionDisplay.textContent = emotions[detectedEmotion].emoji;
+                emotionText.textContent = detectedEmotion.charAt(0).toUpperCase() + detectedEmotion.slice(1);
+                emotionConfidence.textContent = `Confidence: ${confidence}%`;
+                
+                // Generate emotion breakdown
+                generateEmotionBreakdown(detectedEmotion);
+                
+                // Update charts
+                updateChartsForEmotion(detectedEmotion);
+                
+                // Add to history if in mental health tab
+                if (document.querySelector('#mental-health').classList.contains('active')) {
+                    addToMentalHealthHistory(detectedEmotion, text);
+                }
+            }, 800);
+        }
+        
+        // Simple emotion detection based on keywords
+        function detectEmotionFromText(text) {
+            const lowerText = text.toLowerCase();
+            
+            // Keyword matching for different emotions
+            if (lowerText.includes('happy') || lowerText.includes('great') || lowerText.includes('good') || 
+                lowerText.includes('excited') || lowerText.includes('joy') || lowerText.includes('love')) {
+                return Math.random() > 0.5 ? 'happy' : 'excited';
+            } else if (lowerText.includes('sad') || lowerText.includes('lonely') || lowerText.includes('depressed') || 
+                       lowerText.includes('cry') || lowerText.includes('miss')) {
+                return 'sad';
+            } else if (lowerText.includes('angry') || lowerText.includes('mad') || lowerText.includes('frustrated') || 
+                       lowerText.includes('annoyed') || lowerText.includes('hate')) {
+                return 'angry';
+            } else if (lowerText.includes('anxious') || lowerText.includes('worried') || lowerText.includes('stressed') || 
+                       lowerText.includes('nervous') || lowerText.includes('scared')) {
+                return 'anxious';
+            } else if (lowerText.includes('peaceful') || lowerText.includes('calm') || lowerText.includes('content') || 
+                       lowerText.includes('relaxed')) {
+                return 'content';
+            } else if (lowerText.includes('surprised') || lowerText.includes('shocked') || lowerText.includes('amazed')) {
+                return 'surprised';
+            } else {
+                return 'neutral';
+            }
+        }
+        
+        // Generate emotion breakdown visualization
+        function generateEmotionBreakdown(primaryEmotion) {
+            const emotionValues = {
+                happy: 0,
+                sad: 0,
+                angry: 0,
+                anxious: 0,
+                excited: 0,
+                neutral: 0,
+                content: 0,
+                surprised: 0
+            };
+            
+            // Set primary emotion to highest value
+            emotionValues[primaryEmotion] = Math.floor(Math.random() * 30) + 70;
+            
+            // Generate random values for other emotions
+            Object.keys(emotionValues).forEach(emotion => {
+                if (emotion !== primaryEmotion) {
+                    emotionValues[emotion] = Math.floor(Math.random() * 40);
+                }
+            });
+            
+            // Clear previous breakdown
+            emotionBreakdown.innerHTML = '';
+            
+            // Create emotion items
+            Object.keys(emotionValues).forEach(emotion => {
+                const value = emotionValues[emotion];
+                
+                const emotionItem = document.createElement('div');
+                emotionItem.className = 'emotion-item';
+                
+                emotionItem.innerHTML = `
+                    <div class="emotion-name">
+                        <span>${emotions[emotion].emoji}</span>
+                        <span>${emotion.charAt(0).toUpperCase() + emotion.slice(1)}</span>
+                    </div>
+                    <div>${value}%</div>
+                `;
+                
+                const emotionBar = document.createElement('div');
+                emotionBar.className = 'emotion-bar';
+                
+                const emotionFill = document.createElement('div');
+                emotionFill.className = 'emotion-fill';
+                emotionFill.style.width = `${value}%`;
+                emotionFill.style.backgroundColor = emotions[emotion].color;
+                
+                emotionBar.appendChild(emotionFill);
+                
+                emotionBreakdown.appendChild(emotionItem);
+                emotionBreakdown.appendChild(emotionBar);
+            });
+        }
+        
+        // Update charts based on detected emotion
+        function updateChartsForEmotion(emotion) {
+            // Update emotion chart
+            const emotionData = {
+                happy: [70, 5, 5, 5, 10, 5],
+                sad: [10, 70, 5, 10, 0, 5],
+                angry: [5, 10, 70, 10, 0, 5],
+                anxious: [5, 15, 5, 70, 0, 5],
+                excited: [60, 0, 0, 5, 30, 5],
+                neutral: [10, 10, 5, 5, 5, 65],
+                content: [50, 0, 0, 0, 10, 40],
+                surprised: [30, 5, 5, 20, 30, 10]
+            };
+            
+            emotionChart.data.datasets[0].data = emotionData[emotion] || [25, 25, 15, 15, 10, 10];
+            emotionChart.update();
+            
+            // Update sentiment chart
+            const sentimentData = {
+                happy: [85, 5, 10],
+                sad: [15, 70, 15],
+                angry: [10, 80, 10],
+                anxious: [20, 60, 20],
+                excited: [90, 5, 5],
+                neutral: [30, 20, 50],
+                content: [75, 5, 20],
+                surprised: [60, 20, 20]
+            };
+            
+            sentimentChart.data.datasets[0].data = sentimentData[emotion] || [50, 30, 20];
+            sentimentChart.update();
+        }
+        
+        // Voice recording functions
+        function startRecording() {
+            if (!speechRecognition) {
+                alert('Speech recognition is not supported in your browser. Please use Chrome or Edge.');
+                return;
+            }
+            
+            try {
+                speechRecognition.start();
+                isRecording = true;
+                startRecordingBtn.disabled = true;
+                stopRecordingBtn.disabled = false;
+                analyzeVoiceBtn.disabled = true;
+                statusIndicator.style.display = 'block';
+                statusText.textContent = 'Listening... Speak now';
+                voiceInput.value = '';
+                
+                voiceEmotionDisplay.textContent = '🎤';
+                voiceEmotionText.textContent = 'Analyzing speech...';
+                voiceEmotionConfidence.textContent = 'Speak for at least 5 seconds';
+            } catch (error) {
+                console.error('Error starting speech recognition:', error);
+                statusText.textContent = 'Error starting microphone';
+            }
+        }
+        
+        function stopRecording() {
+            if (speechRecognition && isRecording) {
+                speechRecognition.stop();
+                isRecording = false;
+                startRecordingBtn.disabled = false;
+                stopRecordingBtn.disabled = true;
+                analyzeVoiceBtn.disabled = false;
+                statusIndicator.style.display = 'none';
+                statusText.textContent = 'Recording stopped. Ready to analyze.';
+            }
+        }
+        
+        function analyzeVoice() {
+            const text = voiceInput.value.trim();
+            
+            if (!text) {
+                alert('Please record some speech first');
+                return;
+            }
+            
+            // Simulate voice emotion analysis
+            setTimeout(() => {
+                const detectedEmotion = detectEmotionFromText(text);
+                const confidence = Math.floor(Math.random() * 25) + 70;
+                
+                // Update UI
+                voiceEmotionDisplay.textContent = emotions[detectedEmotion].emoji;
+                voiceEmotionText.textContent = detectedEmotion.charAt(0).toUpperCase() + detectedEmotion.slice(1);
+                voiceEmotionConfidence.textContent = `Confidence: ${confidence}%`;
+                
+                // Update voice emotion chart
+                const emotionData = {
+                    happy: [80, 10, 5, 15, 70, 40],
+                    sad: [20, 80, 15, 40, 10, 20],
+                    angry: [15, 20, 85, 30, 25, 10],
+                    anxious: [25, 40, 20, 85, 30, 15],
+                    excited: [70, 5, 10, 20, 90, 30],
+                    neutral: [40, 30, 20, 30, 30, 70],
+                    content: [60, 10, 5, 10, 40, 85],
+                    surprised: [50, 20, 15, 60, 70, 25]
+                };
+                
+                voiceEmotionChart.data.datasets[0].data = emotionData[detectedEmotion] || [50, 30, 25, 40, 45, 35];
+                voiceEmotionChart.update();
+                
+                // Update pitch chart
+                const pitchData = {
+                    happy: [130, 160, 155, 165, 150, 145],
+                    sad: [110, 105, 100, 95, 100, 105],
+                    angry: [140, 165, 175, 160, 150, 145],
+                    anxious: [125, 145, 140, 155, 135, 130],
+                    excited: [140, 170, 180, 175, 165, 155],
+                    neutral: [120, 125, 122, 125, 123, 121],
+                    content: [115, 120, 118, 122, 119, 117],
+                    surprised: [110, 150, 145, 140, 135, 130]
+                };
+                
+                voicePitchChart.data.datasets[0].data = pitchData[detectedEmotion] || [120, 145, 160, 130, 110, 125];
+                voicePitchChart.update();
+            }, 1200);
+        }
+        
+        // Mental health functions
+        function loadMentalHealthHistory() {
+            const historyContainer = document.getElementById('mentalHealthHistory');
+            historyContainer.innerHTML = '';
+            
+            mentalHealthHistoryData.forEach(entry => {
+                const historyItem = document.createElement('div');
+                historyItem.className = 'history-item';
+                
+                historyItem.innerHTML = `
+                    <div>
+                        <strong>${entry.date}</strong>
+                        <div>${emotions[entry.emotion].emoji} ${entry.emotion.charAt(0).toUpperCase() + entry.emotion.slice(1)}</div>
+                    </div>
+                    <div>${entry.note}</div>
+                `;
+                
+                historyContainer.appendChild(historyItem);
+            });
+        }
+        
+        function addMentalHealthEntry() {
+            const today = new Date().toISOString().split('T')[0];
+            const emotionsList = Object.keys(emotions);
+            const randomEmotion = emotionsList[Math.floor(Math.random() * emotionsList.length)];
+            const notes = [
+                "Feeling okay today",
+                "Had a productive day",
+                "Struggling with motivation",
+                "Great conversations with friends",
+                "Need more rest",
+                "Exercised and felt good",
+                "Work was stressful",
+                "Enjoyed a hobby"
+            ];
+            const randomNote = notes[Math.floor(Math.random() * notes.length)];
+            
+            // Add to beginning of array
+            mentalHealthHistoryData.unshift({
+                date: today,
+                emotion: randomEmotion,
+                note: randomNote
+            });
+            
+            // Keep only last 5 entries
+            if (mentalHealthHistoryData.length > 5) {
+                mentalHealthHistoryData.pop();
+            }
+            
+            loadMentalHealthHistory();
+            
+            // Show confirmation
+            alert(`Entry added for ${today}: ${randomEmotion}`);
+        }
+        
+        function addToMentalHealthHistory(emotion, text) {
+            const today = new Date().toISOString().split('T')[0];
+            
+            // Add to beginning of array
+            mentalHealthHistoryData.unshift({
+                date: today,
+                emotion: emotion,
+                note: text.length > 50 ? text.substring(0, 50) + "..." : text
+            });
+            
+            // Keep only last 5 entries
+            if (mentalHealthHistoryData.length > 5) {
+                mentalHealthHistoryData.pop();
+            }
+            
+            // Only update if we're on the mental health tab
+            if (document.querySelector('#mental-health').classList.contains('active')) {
+                loadMentalHealthHistory();
+            }
+        }
+        
+        function viewTrends() {
+            alert('Trends view would show historical data and patterns over time. In a full implementation, this would include detailed charts and insights.');
+        }
+        
+        // Customer feedback functions
+        function analyzeFeedback() {
+            const feedback = document.getElementById('feedbackInput').value.trim();
+            
+            if (!feedback) {
+                alert('Please enter some feedback to analyze');
+                return;
+            }
+            
+            // Simulate analysis
+            setTimeout(() => {
+                const detectedEmotion = detectEmotionFromText(feedback);
+                const positiveScore = Math.floor(Math.random() * 30) + 60;
+                const negativeScore = 100 - positiveScore;
+                
+                // Update UI
+                document.getElementById('feedbackEmotionDisplay').textContent = emotions[detectedEmotion].emoji;
+                document.getElementById('feedbackEmotionText').textContent = detectedEmotion.charAt(0).toUpperCase() + detectedEmotion.slice(1);
+                document.getElementById('feedbackEmotionConfidence').textContent = `Positive: ${positiveScore}% | Negative: ${negativeScore}%`;
+                
+                // Update feedback chart with random values
+                feedbackChart.data.datasets[0].data = [
+                    Math.floor(Math.random() * 30) + 70, // Product Quality
+                    Math.floor(Math.random() * 40) + 30, // Delivery
+                    Math.floor(Math.random() * 30) + 60, // Customer Service
+                    Math.floor(Math.random() * 30) + 50, // Price
+                    Math.floor(Math.random() * 30) + 70  // Ease of Use
+                ];
+                feedbackChart.update();
+            }, 1000);
+        }
+        
+        function loadSampleFeedback() {
+            const sampleFeedback = `I've been using this product for a month now and overall I'm satisfied. The features are great and it has improved my workflow significantly. However, I did encounter some issues with the mobile app crashing occasionally. Customer support was helpful but response time could be better. The price is reasonable for what you get.`;
+            
+            document.getElementById('feedbackInput').value = sampleFeedback;
+            analyzeFeedback();
+        }
+    </script>
+</body>
+</html>
